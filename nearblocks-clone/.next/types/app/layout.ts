@@ -1,4 +1,4 @@
-// File: /home/efte/Documents/projects/NEAR/REDACTED/nearblocks/nearblocks-clone/src/app/layout.tsx
+// File: /home/efte/Documents/projects/NEAR/REDACTED/nearblocks/near-explorer-redacted/nearblocks-clone/src/app/layout.tsx
 import * as entry from '../../../src/app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

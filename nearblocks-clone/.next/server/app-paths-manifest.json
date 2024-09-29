@@ -1,3 +1,4 @@
 {
-  "/recent-transactions/page": "app/recent-transactions/page.js"
+  "/page": "app/page.js",
+  "/token/[address]/page": "app/token/[address]/page.js"
 }
