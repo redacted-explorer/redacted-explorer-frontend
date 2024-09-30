@@ -79,7 +79,8 @@ export function truncateString(str: string, length: number) {
   return str;
 }
 
-export function formatNumber(number: number) {
+export function formatNumber(number: number | string) {
+  number = Number(number);
   let outputNumber = 0;
   if (number > -1 && number < 1) {
     outputNumber = Number(number.toFixed(3));

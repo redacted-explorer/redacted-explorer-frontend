@@ -11,7 +11,12 @@ import {
   TableCell,
   getKeyValue,
 } from "@nextui-org/table";
-import { convertIntToFloat, timestampToTimeDifference } from "../../../utils";
+import {
+  convertIntToFloat,
+  formatNumber,
+  timestampToTimeDifference,
+  truncateString,
+} from "../../../utils";
 import { FaExternalLinkAlt } from "react-icons/fa";
 
 type TokenMetadata = {
@@ -37,9 +42,7 @@ type Column = {
   time: string;
   type: "buy" | "sell";
   amount: string;
-  ticker: string;
   for: string;
-  near: string;
   price: string;
   maker: string;
   txn: React.ReactNode;
@@ -56,9 +59,7 @@ export default function TradeHistoryTable({
     { key: "time", label: "TIME" },
     { key: "type", label: "TYPE" },
     { key: "amount", label: "AMOUNT" },
-    { key: "ticker", label: "TICKER" },
     { key: "for", label: "FOR" },
-    { key: "near", label: "NEAR" },
     { key: "price", label: "PRICE" },
     { key: "maker", label: "MAKER" },
     { key: "txn", label: "TXN" },
@@ -66,9 +67,10 @@ export default function TradeHistoryTable({
 
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const initUrl = `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=Newest&limit=${entriesPerPage}`;
-  const [page, setPage] = useState(0);
+  const [firstEntry, setFirstEntry] = useState(0);
   const [firstId, setFirstId] = useState<number | null>(null);
   const [lastId, setLastId] = useState<number | null>(null);
+  const [latestTimestamp, setLatestTimestamp] = useState<number | null>(null);
   const [trades, setTrades] = useState<Trade[] | null>(null);
   const [tableColumns, setTableColumns] = useState<Column[] | null>(null);
   const [allTokensMetadata, setAllTokensMetadata] = useState<any>(null);
@@ -76,10 +78,10 @@ export default function TradeHistoryTable({
   const [tokenMetadata, setTokenMetadata] = useState<TokenMetadata | null>(
     null
   );
-  const [loadingData, setLoadingData] = useState(true);
 
   async function updateTrades(url: string, sort: boolean = false) {
     if (!tokenMetadata || !allTokensMetadata) return;
+    console.log(url);
     try {
       fetch(url, {
         method: "GET",
@@ -101,7 +103,6 @@ export default function TradeHistoryTable({
                 : Object.keys(balance_changes)[0];
 
             /* get rid of the - in front of the string */
-
             return {
               id,
               timestamp: block_timestamp_nanosec,
@@ -115,9 +116,10 @@ export default function TradeHistoryTable({
           });
 
           if (sort) {
-            tradesTemp.sort((a, b) => a.id - b.id);
+            tradesTemp.sort((a, b) => b.id - a.id);
           }
           setTrades(tradesTemp);
+          console.log(tradesTemp);
 
           /* populate the columns list */
           const tableColumnsTemp = tradesTemp.map((trade: Trade) => {
@@ -128,24 +130,14 @@ export default function TradeHistoryTable({
               tokenMetadata.decimals
             );
 
-            let ticker = "unknown";
-            let swapQty = "unknown";
-            let swapQtyNear = "unkown";
-            let price = "unknown";
+            let swappedFor = "unknown";
             if (otherToken) {
-              ticker = otherToken.metadata.symbol;
-              swapQty = convertIntToFloat(
+              let ticker = otherToken.metadata.symbol;
+              let swapQty = convertIntToFloat(
                 trade.qtyOtherToken.toString(),
                 otherToken.metadata.decimals
               );
-              swapQtyNear = (
-                (Number(swapQty) * otherToken.price_usd) /
-                nearPrice
-              ).toString();
-              price = (
-                (Number(swapQtyNear) * nearPrice) /
-                Number(amount)
-              ).toString();
+              swappedFor = `${formatNumber(swapQty)} ${ticker}`;
             }
             const txnLink = (
               <div>
@@ -161,17 +153,21 @@ export default function TradeHistoryTable({
               id: trade.id,
               time,
               type: trade.type,
-              amount,
-              ticker,
-              for: swapQty,
-              near: swapQtyNear,
-              price,
-              maker: trade.maker,
+              amount: formatNumber(amount),
+              for: swappedFor,
+              price: "coming soon",
+              maker: truncateString(trade.maker, 20),
               txn: txnLink,
             };
-
             return column;
           });
+          console.log("Last:", tableColumnsTemp[0], tradesTemp[0]);
+          console.log(tradesTemp[0].timestamp);
+          console.log("First:", tableColumnsTemp[tableColumnsTemp.length - 1]);
+
+          setLastId(tableColumnsTemp[0].id);
+          setFirstId(tableColumnsTemp[tableColumnsTemp.length - 1].id);
+          setLatestTimestamp(tradesTemp[0].timestamp);
           setTableColumns(tableColumnsTemp);
         });
     } catch (error) {
@@ -201,7 +197,6 @@ export default function TradeHistoryTable({
           setTokenMetadata(tokenMetadataTemp);
           setAllTokensMetadata(data);
           setNearPrice(data["wrap.near"].price_usd);
-          loadingData;
         });
     } catch (e) {
       console.log(e);
@@ -214,13 +209,33 @@ export default function TradeHistoryTable({
     }
   }, [tokenMetadata, allTokensMetadata]);
 
-  function previousPage() {}
-  function nextPage() {}
+  function previousPage() {
+    const firstEntryTemp =
+      firstEntry - entriesPerPage < 0 ? 0 : firstEntry - entriesPerPage;
+    if (firstEntryTemp === 0) {
+      updateTrades(initUrl);
+    } else {
+      updateTrades(
+        `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=AfterId&id=${lastId}&limit=${entriesPerPage}`,
+        true
+      );
+    }
+    setFirstEntry(firstEntryTemp);
+  }
+  function nextPage() {
+    setFirstEntry((prev) => prev + entriesPerPage);
+    updateTrades(
+      `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeId&id=${firstId}&limit=${entriesPerPage}`
+    );
+  }
 
   function updateEntriesPerPage(entries: number) {
     setEntriesPerPage(entries);
+    if (!latestTimestamp) return;
     updateTrades(
-      `https://events.intear.tech/query/tx_transaction?pagination_by=AfterId&id=${lastId}&limit=${entries}`
+      `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeTimestamp&timestamp_nanosec=${
+        Number(latestTimestamp) + 10000
+      }&limit=${entries}`
     );
   }
   /* 
@@ -232,6 +247,13 @@ export default function TradeHistoryTable({
   */
   return (
     <div>
+      <div className="flex gap-2 ml-4 my-2">
+        {entriesPerPageOptions.map((amount) => (
+          <Button key={amount} onClick={() => updateEntriesPerPage(amount)}>
+            {amount}
+          </Button>
+        ))}
+      </div>
       {tableColumns && (
         <div className="flex flex-col justify-center">
           <Table>
@@ -242,7 +264,12 @@ export default function TradeHistoryTable({
             </TableHeader>
             <TableBody items={tableColumns}>
               {(item) => (
-                <TableRow key={item.id}>
+                <TableRow
+                  key={item.id}
+                  className={
+                    item.type === "buy" ? "bg-green-200" : "bg-red-200"
+                  }
+                >
                   {(columnKey) => (
                     <TableCell>{getKeyValue(item, columnKey)}</TableCell>
                   )}
@@ -254,7 +281,7 @@ export default function TradeHistoryTable({
       )}
       <div className="flex flex-col gap-2 ml-4 my-2">
         <div className="flex gap-2">
-          {page === 0 ? (
+          {firstEntry === 0 ? (
             <Button isDisabled>Previous</Button>
           ) : (
             <Button onClick={previousPage}>Previous</Button>
