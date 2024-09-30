@@ -11,16 +11,38 @@ import {
   TableCell,
   getKeyValue,
 } from "@nextui-org/table";
+import { convertIntToFloat, timestampToTimeDifference } from "../../../utils";
+import { FaExternalLinkAlt } from "react-icons/fa";
+
+type TokenMetadata = {
+  name: string;
+  symbol: string;
+  decimals: number;
+  priceUsd: string;
+};
 
 type Trade = {
   id: number;
-  date: number;
+  timestamp: number;
   type: "buy" | "sell";
-  qtyFrom: number;
-  qtyTo: number;
+  qtyToken: number;
+  qtyOtherToken: number;
   otherTokenAddress: string;
   maker: string;
   txn: string;
+};
+
+type Column = {
+  id: number;
+  time: string;
+  type: "buy" | "sell";
+  amount: string;
+  ticker: string;
+  for: string;
+  near: string;
+  price: string;
+  maker: string;
+  txn: React.ReactNode;
 };
 
 const entriesPerPageOptions = [10, 25, 50];
@@ -31,9 +53,11 @@ export default function TradeHistoryTable({
   tokenAddress: string;
 }) {
   const columns = [
+    { key: "time", label: "TIME" },
     { key: "type", label: "TYPE" },
     { key: "amount", label: "AMOUNT" },
     { key: "ticker", label: "TICKER" },
+    { key: "for", label: "FOR" },
     { key: "near", label: "NEAR" },
     { key: "price", label: "PRICE" },
     { key: "maker", label: "MAKER" },
@@ -41,42 +65,114 @@ export default function TradeHistoryTable({
   ];
 
   const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const initUrl = `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=Newest&limit=${entriesPerPage}`;
   const [page, setPage] = useState(0);
   const [firstId, setFirstId] = useState<number | null>(null);
   const [lastId, setLastId] = useState<number | null>(null);
   const [trades, setTrades] = useState<Trade[] | null>(null);
+  const [tableColumns, setTableColumns] = useState<Column[] | null>(null);
+  const [allTokensMetadata, setAllTokensMetadata] = useState<any>(null);
+  const [nearPrice, setNearPrice] = useState(0);
+  const [tokenMetadata, setTokenMetadata] = useState<TokenMetadata | null>(
+    null
+  );
+  const [loadingData, setLoadingData] = useState(true);
 
-  async function updateTransactions(url: string, sort: boolean = false) {
-    console.log(url);
+  async function updateTrades(url: string, sort: boolean = false) {
+    if (!tokenMetadata || !allTokensMetadata) return;
     try {
       fetch(url, {
         method: "GET",
       })
         .then((response) => response.json())
         .then((data) => {
-          data.forEach((date: any) => {
+          /* populate the trades list */
+          const tradesTemp: Trade[] = data.map((date: any) => {
             const { id } = date;
-            const { block_timestamp_nanosec, balance_changes } = date.event;
-            console.log(balance_changes);
+            const {
+              block_timestamp_nanosec,
+              balance_changes,
+              trader,
+              transaction_id,
+            } = date.event;
+            const otherToken =
+              Object.keys(balance_changes)[0] === tokenAddress
+                ? Object.keys(balance_changes)[1]
+                : Object.keys(balance_changes)[0];
+
+            /* get rid of the - in front of the string */
+
+            return {
+              id,
+              timestamp: block_timestamp_nanosec,
+              type: balance_changes[tokenAddress] < 0 ? "sell" : "buy",
+              qtyToken: balance_changes[tokenAddress].replace(/^-/, ""),
+              qtyOtherToken: balance_changes[otherToken].replace(/^-/, ""),
+              otherTokenAddress: otherToken,
+              maker: trader,
+              txn: transaction_id,
+            };
           });
 
-          /*          const transactions_temp: Trade[] = data.map((trade: any) => {
-            const temp_trade: Trade = {
-              id: 0,
-              date: 0,
-              type: "buy",
-              qtyFrom: 0,
-              qtyTo: 0,
-              otherTokenAddress: "",
-              maker: "",
-              txn: "",
-            };
-            return trade;
-          });
           if (sort) {
-            transactions_temp.sort((a, b) => a.id - b.id);
+            tradesTemp.sort((a, b) => a.id - b.id);
           }
-          setTrades(transactions_temp); */
+          setTrades(tradesTemp);
+
+          /* populate the columns list */
+          const tableColumnsTemp = tradesTemp.map((trade: Trade) => {
+            const otherToken = allTokensMetadata[trade.otherTokenAddress];
+            const time = timestampToTimeDifference(trade.timestamp);
+            const amount = convertIntToFloat(
+              trade.qtyToken.toString(),
+              tokenMetadata.decimals
+            );
+
+            let ticker = "unknown";
+            let swapQty = "unknown";
+            let swapQtyNear = "unkown";
+            let price = "unknown";
+            if (otherToken) {
+              ticker = otherToken.metadata.symbol;
+              swapQty = convertIntToFloat(
+                trade.qtyOtherToken.toString(),
+                otherToken.metadata.decimals
+              );
+              swapQtyNear = (
+                (Number(swapQty) * otherToken.price_usd) /
+                nearPrice
+              ).toString();
+              price = (
+                (Number(swapQtyNear) * nearPrice) /
+                Number(amount)
+              ).toString();
+            }
+            const txnLink = (
+              <div>
+                <a
+                  href={`https://nearblocks.io/txns/${trade.txn}`}
+                  target="_blank"
+                >
+                  <FaExternalLinkAlt />
+                </a>
+              </div>
+            );
+            const column: Column = {
+              id: trade.id,
+              time,
+              type: trade.type,
+              amount,
+              ticker,
+              for: swapQty,
+              near: swapQtyNear,
+              price,
+              maker: trade.maker,
+              txn: txnLink,
+            };
+
+            return column;
+          });
+          setTableColumns(tableColumnsTemp);
         });
     } catch (error) {
       console.log(error);
@@ -84,19 +180,46 @@ export default function TradeHistoryTable({
   }
 
   useEffect(() => {
-    const initialFetch = async () => {
-      updateTransactions(
-        `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=Newest&limit=${entriesPerPage}`
-      );
-    };
-    initialFetch();
+    try {
+      fetch("https://prices.intear.tech/tokens", { method: "GET" })
+        .then((response) => response.json())
+        .then((data) => {
+          const token = data[tokenAddress];
+          if (!token) {
+            throw new Error(
+              `No information found for token Address ${tokenAddress}`
+            );
+          }
+          const { name, symbol, decimals } = token.metadata;
+          const priceUsd = token.price_usd;
+          const tokenMetadataTemp = {
+            name,
+            symbol,
+            decimals,
+            priceUsd,
+          };
+          setTokenMetadata(tokenMetadataTemp);
+          setAllTokensMetadata(data);
+          setNearPrice(data["wrap.near"].price_usd);
+          loadingData;
+        });
+    } catch (e) {
+      console.log(e);
+    }
   }, []);
+
+  useEffect(() => {
+    if (tokenMetadata !== null && allTokensMetadata !== null) {
+      updateTrades(initUrl);
+    }
+  }, [tokenMetadata, allTokensMetadata]);
 
   function previousPage() {}
   function nextPage() {}
+
   function updateEntriesPerPage(entries: number) {
     setEntriesPerPage(entries);
-    updateTransactions(
+    updateTrades(
       `https://events.intear.tech/query/tx_transaction?pagination_by=AfterId&id=${lastId}&limit=${entries}`
     );
   }
@@ -109,7 +232,7 @@ export default function TradeHistoryTable({
   */
   return (
     <div>
-      {trades && (
+      {tableColumns && (
         <div className="flex flex-col justify-center">
           <Table>
             <TableHeader columns={columns}>
@@ -117,7 +240,7 @@ export default function TradeHistoryTable({
                 <TableColumn key={column.key}>{column.label}</TableColumn>
               )}
             </TableHeader>
-            <TableBody items={trades}>
+            <TableBody items={tableColumns}>
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) => (
