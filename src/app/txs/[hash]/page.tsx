@@ -42,7 +42,7 @@ export default function Page({ params }: { params: { hash: string } }) {
   return (
     <div>
       <h1>{params.hash}</h1>
-      {txs && <div>{txs[0].signerId}</div>}
+      {txs && txs.length > 0 && <div>{txs[0].signerId}</div>}
     </div>
   );
 }
