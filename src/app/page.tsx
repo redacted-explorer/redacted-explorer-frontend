@@ -7,7 +7,6 @@ import CardRow from "@/components/ui/CardRow";
 import Pill from "@/components/ui/Pill";
 import { useState } from "react";
 import { rows, columns } from "../data/dummy-tx.js";
-import { Button } from "@nextui-org/button";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("transactions");
