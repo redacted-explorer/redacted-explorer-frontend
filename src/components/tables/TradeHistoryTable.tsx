@@ -161,9 +161,6 @@ export default function TradeHistoryTable({
             };
             return row;
           });
-          console.log("Last:", tableRowsTemp[0], tradesTemp[0]);
-          console.log(tradesTemp[0].timestamp);
-          console.log("First:", tableRowsTemp[tableRowsTemp.length - 1]);
 
           setLastId(tableRowsTemp[0].id);
           setFirstId(tableRowsTemp[tableRowsTemp.length - 1].id);
@@ -247,12 +244,23 @@ export default function TradeHistoryTable({
   */
   return (
     <div>
-      <div className="flex gap-2 ml-4 my-2">
-        {entriesPerPageOptions.map((amount) => (
-          <Button key={amount} onClick={() => updateEntriesPerPage(amount)}>
-            {amount}
-          </Button>
-        ))}
+      <div className="flex flex-col gap-2 ml-4 my-2">
+        <div className="flex gap-2">
+          {firstEntry === 0 ? (
+            <Button isDisabled>Previous</Button>
+          ) : (
+            <Button onClick={previousPage}>Previous</Button>
+          )}
+          <Button onClick={nextPage}>Next</Button>
+        </div>
+        <div>Results Per Page</div>
+        <div className="flex gap-2">
+          {entriesPerPageOptions.map((amount) => (
+            <Button key={amount} onClick={() => updateEntriesPerPage(amount)}>
+              {amount}
+            </Button>
+          ))}
+        </div>
       </div>
       {tableRows && (
         <div className="flex flex-col justify-center">
