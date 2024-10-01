@@ -7,10 +7,12 @@ import CardRow from "@/components/ui/CardRow";
 import Pill from "@/components/ui/Pill";
 import { useState } from "react";
 import { rows, columns } from "../data/dummy-tx.js";
+import { Button } from "@nextui-org/button";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("transactions");
   const tabs = ["Transactions", "Receipts", "Token Txns", "NFT Token Txns"];
+
   return (
     <div className="flex flex-col justify-center p-4">
       <div className="flex flex-wrap gap-4 justify-center">

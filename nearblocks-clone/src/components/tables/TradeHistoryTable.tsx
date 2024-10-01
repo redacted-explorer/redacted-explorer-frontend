@@ -37,7 +37,7 @@ type Trade = {
   txn: string;
 };
 
-type Column = {
+type Row = {
   id: number;
   time: string;
   type: "buy" | "sell";
@@ -72,7 +72,7 @@ export default function TradeHistoryTable({
   const [lastId, setLastId] = useState<number | null>(null);
   const [latestTimestamp, setLatestTimestamp] = useState<number | null>(null);
   const [trades, setTrades] = useState<Trade[] | null>(null);
-  const [tableColumns, setTableColumns] = useState<Column[] | null>(null);
+  const [tableRows, setTableRows] = useState<Row[] | null>(null);
   const [allTokensMetadata, setAllTokensMetadata] = useState<any>(null);
   const [nearPrice, setNearPrice] = useState(0);
   const [tokenMetadata, setTokenMetadata] = useState<TokenMetadata | null>(
@@ -121,8 +121,8 @@ export default function TradeHistoryTable({
           setTrades(tradesTemp);
           console.log(tradesTemp);
 
-          /* populate the columns list */
-          const tableColumnsTemp = tradesTemp.map((trade: Trade) => {
+          /* populate the rows list */
+          const tableRowsTemp = tradesTemp.map((trade: Trade) => {
             const otherToken = allTokensMetadata[trade.otherTokenAddress];
             const time = timestampToTimeDifference(trade.timestamp);
             const amount = convertIntToFloat(
@@ -149,7 +149,7 @@ export default function TradeHistoryTable({
                 </a>
               </div>
             );
-            const column: Column = {
+            const row: Row = {
               id: trade.id,
               time,
               type: trade.type,
@@ -159,16 +159,16 @@ export default function TradeHistoryTable({
               maker: truncateString(trade.maker, 20),
               txn: txnLink,
             };
-            return column;
+            return row;
           });
-          console.log("Last:", tableColumnsTemp[0], tradesTemp[0]);
+          console.log("Last:", tableRowsTemp[0], tradesTemp[0]);
           console.log(tradesTemp[0].timestamp);
-          console.log("First:", tableColumnsTemp[tableColumnsTemp.length - 1]);
+          console.log("First:", tableRowsTemp[tableRowsTemp.length - 1]);
 
-          setLastId(tableColumnsTemp[0].id);
-          setFirstId(tableColumnsTemp[tableColumnsTemp.length - 1].id);
+          setLastId(tableRowsTemp[0].id);
+          setFirstId(tableRowsTemp[tableRowsTemp.length - 1].id);
           setLatestTimestamp(tradesTemp[0].timestamp);
-          setTableColumns(tableColumnsTemp);
+          setTableRows(tableRowsTemp);
         });
     } catch (error) {
       console.log(error);
@@ -254,7 +254,7 @@ export default function TradeHistoryTable({
           </Button>
         ))}
       </div>
-      {tableColumns && (
+      {tableRows && (
         <div className="flex flex-col justify-center">
           <Table>
             <TableHeader columns={columns}>
@@ -262,7 +262,7 @@ export default function TradeHistoryTable({
                 <TableColumn key={column.key}>{column.label}</TableColumn>
               )}
             </TableHeader>
-            <TableBody items={tableColumns}>
+            <TableBody items={tableRows}>
               {(item) => (
                 <TableRow
                   key={item.id}
