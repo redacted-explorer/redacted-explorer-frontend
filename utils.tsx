@@ -1,3 +1,22 @@
+import { FaExternalLinkAlt } from "react-icons/fa";
+
+export type TradeRow = {
+  id: number;
+  time: string;
+  timestamp: number;
+  swapped: string;
+  swappedFor: string;
+  price: string;
+  maker: string;
+  txn: React.ReactNode;
+};
+
+export type TokenMetadata = {
+  name: string;
+  symbol: string;
+  decimals: number;
+};
+
 export function timestampToTimeDifference(timestamp: number): string {
   /* timestamp is in nanoseconds, Date().getTime() in milliseconds */
   timestamp = timestamp / 1000000;
@@ -92,4 +111,60 @@ export function formatNumber(number: number | string) {
     outputNumber = Number(number.toFixed(0));
   }
   return outputNumber.toLocaleString("en-US");
+}
+
+export function tradeEventToRow(event: any, allTokensMetadata: any): TradeRow {
+  const { block_timestamp_nanosec, balance_changes, trader, transaction_id } =
+    event;
+  const [tokenAddress, otherTokenAddress]: string[] =
+    Object.keys(balance_changes);
+  const tokenMetadata = allTokensMetadata[tokenAddress];
+  const otherTokenMetadata = allTokensMetadata[otherTokenAddress];
+
+  const time = timestampToTimeDifference(block_timestamp_nanosec);
+  const timestamp = block_timestamp_nanosec;
+  const type = balance_changes[tokenAddress] < 0 ? "sell" : "buy";
+
+  /* get rid of the '-' in front of the swapped token */
+  let swapped = "unknown";
+  const qtyToken = balance_changes[tokenAddress].replace(/^-/, "");
+  if (tokenMetadata) {
+    const ticker = tokenMetadata.metadata.symbol;
+    const amount = convertIntToFloat(
+      qtyToken.toString(),
+      tokenMetadata.decimals
+    );
+    swapped = `${formatNumber(amount)} ${ticker}`;
+  }
+  /* get other token information */
+  let swappedFor = "unknown";
+  const qtyOtherToken = balance_changes[otherTokenAddress].replace(/^-/, "");
+  if (otherTokenMetadata) {
+    console.log(otherTokenMetadata);
+    let ticker = otherTokenMetadata.metadata.symbol;
+    let swapQty = convertIntToFloat(
+      qtyOtherToken.toString(),
+      otherTokenMetadata.decimals
+    );
+    swappedFor = `${formatNumber(swapQty)} ${ticker}`;
+  }
+  const txnLink = (
+    <div>
+      <a href={`https://nearblocks.io/txns/${transaction_id}`} target="_blank">
+        <FaExternalLinkAlt />
+      </a>
+    </div>
+  );
+
+  const row: TradeRow = {
+    id: transaction_id,
+    time,
+    timestamp,
+    swapped: type === "sell" ? swapped : swappedFor,
+    swappedFor: type === "buy" ? swapped : swappedFor,
+    price: "coming soon",
+    maker: truncateString(trader, 20),
+    txn: txnLink,
+  };
+  return row;
 }

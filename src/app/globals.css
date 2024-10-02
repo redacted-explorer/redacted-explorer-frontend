@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .move-in {
+    animation: moveIn 300ms forwards;
+  }
+  .fade-in {
+    animation: fadeIn 1s forwards;
+  }
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes moveIn {
+    0% {
+      left: -20rem;
+      position: relative;
+    }
+    100% {
+      left: 0rem;
+      position: relative;
+    }
+  }
+}
