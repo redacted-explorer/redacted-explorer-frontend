@@ -1,10 +1,11 @@
 import { FaExternalLinkAlt } from "react-icons/fa";
 
-export type TradeRow = {
+export type TradeTableRow = {
   id: number;
   time: string;
   timestamp: number;
-  swapped: string;
+  type: string;
+  fromAmount: string;
   swappedFor: string;
   price: string;
   maker: string;
@@ -60,12 +61,6 @@ export function convertIntToFloat(amount: string, decimals: number): string {
   return result;
 }
 
-export function intToFloat(amount: string, decimals: number): string {
-  let number = parseFloat(amount);
-  let result = number * Math.pow(10, -decimals);
-  return result.toString();
-}
-
 export function convertFloatToInt(input: string, decimals: number): string {
   // Replace a comma with a dot to standardize the separator
   input = input.replace(",", ".");
@@ -98,8 +93,7 @@ export function truncateString(str: string, length: number) {
   return str;
 }
 
-export function formatNumber(number: number | string) {
-  number = Number(number);
+export function formatNumber(number: number) {
   let outputNumber = 0;
   if (number > -1 && number < 1) {
     outputNumber = Number(number.toFixed(3));
@@ -113,11 +107,17 @@ export function formatNumber(number: number | string) {
   return outputNumber.toLocaleString("en-US");
 }
 
-export function tradeEventToRow(event: any, allTokensMetadata: any): TradeRow {
+export function tradeEventToRow(
+  event: any,
+  tokenAddress: string,
+  allTokensMetadata: any
+): TradeTableRow {
   const { block_timestamp_nanosec, balance_changes, trader, transaction_id } =
     event;
-  const [tokenAddress, otherTokenAddress]: string[] =
-    Object.keys(balance_changes);
+  const otherTokenAddress =
+    Object.keys(balance_changes)[0] === tokenAddress
+      ? Object.keys(balance_changes)[1]
+      : Object.keys(balance_changes)[0];
   const tokenMetadata = allTokensMetadata[tokenAddress];
   const otherTokenMetadata = allTokensMetadata[otherTokenAddress];
 
@@ -126,28 +126,27 @@ export function tradeEventToRow(event: any, allTokensMetadata: any): TradeRow {
   const type = balance_changes[tokenAddress] < 0 ? "sell" : "buy";
 
   /* get rid of the '-' in front of the swapped token */
-  let swapped = "unknown";
-  const qtyToken = balance_changes[tokenAddress].replace(/^-/, "");
+
+  let fromAmount = balance_changes[tokenAddress].replace(/^-/, "");
   if (tokenMetadata) {
-    const ticker = tokenMetadata.metadata.symbol;
-    const amount = convertIntToFloat(
-      qtyToken.toString(),
-      tokenMetadata.decimals
+    fromAmount = formatNumber(
+      Number(convertIntToFloat(fromAmount, tokenMetadata.metadata.decimals))
     );
-    swapped = `${formatNumber(amount)} ${ticker}`;
   }
   /* get other token information */
-  let swappedFor = "unknown";
+  let swappedFor = "";
   const qtyOtherToken = balance_changes[otherTokenAddress].replace(/^-/, "");
   if (otherTokenMetadata) {
-    console.log(otherTokenMetadata);
     let ticker = otherTokenMetadata.metadata.symbol;
     let swapQty = convertIntToFloat(
       qtyOtherToken.toString(),
-      otherTokenMetadata.decimals
+      otherTokenMetadata.metadata.decimals
     );
-    swappedFor = `${formatNumber(swapQty)} ${ticker}`;
+    swappedFor = `${formatNumber(Number(swapQty))} ${ticker}`;
+  } else {
+    swappedFor = `${qtyOtherToken} ${otherTokenAddress}`;
   }
+
   const txnLink = (
     <div>
       <a href={`https://nearblocks.io/txns/${transaction_id}`} target="_blank">
@@ -156,12 +155,13 @@ export function tradeEventToRow(event: any, allTokensMetadata: any): TradeRow {
     </div>
   );
 
-  const row: TradeRow = {
+  const row: TradeTableRow = {
     id: transaction_id,
     time,
     timestamp,
-    swapped: type === "sell" ? swapped : swappedFor,
-    swappedFor: type === "buy" ? swapped : swappedFor,
+    type,
+    fromAmount,
+    swappedFor,
     price: "coming soon",
     maker: truncateString(trader, 20),
     txn: txnLink,

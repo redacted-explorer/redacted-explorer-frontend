@@ -15,9 +15,12 @@ import {
   convertIntToFloat,
   formatNumber,
   timestampToTimeDifference,
+  tradeEventToRow,
+  TradeTableRow,
   truncateString,
 } from "../../../utils";
 import { FaExternalLinkAlt } from "react-icons/fa";
+import useWebSocket from "react-use-websocket";
 
 type TokenMetadata = {
   name: string;
@@ -58,29 +61,30 @@ export default function TradeHistoryTable({
   const columns = [
     { key: "time", label: "TIME" },
     { key: "type", label: "TYPE" },
-    { key: "amount", label: "AMOUNT" },
-    { key: "for", label: "FOR" },
+    { key: "fromAmount", label: "AMOUNT" },
+    { key: "swappedFor", label: "SWAPPED" },
     { key: "price", label: "PRICE" },
     { key: "maker", label: "MAKER" },
     { key: "txn", label: "TXN" },
   ];
 
   const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const WEBSOCKET_URL = "wss://ws-events.intear.tech/events/trade_swap";
   const initUrl = `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=Newest&limit=${entriesPerPage}`;
   const [firstEntry, setFirstEntry] = useState(0);
   const [firstId, setFirstId] = useState<number | null>(null);
   const [lastId, setLastId] = useState<number | null>(null);
   const [latestTimestamp, setLatestTimestamp] = useState<number | null>(null);
-  const [trades, setTrades] = useState<Trade[] | null>(null);
-  const [tableRows, setTableRows] = useState<Row[] | null>(null);
+  const [tableRows, setTableRows] = useState<TradeTableRow[] | null>(null);
   const [allTokensMetadata, setAllTokensMetadata] = useState<any>(null);
   const [nearPrice, setNearPrice] = useState(0);
+  const [initialized, setInitialized] = useState(false);
   const [tokenMetadata, setTokenMetadata] = useState<TokenMetadata | null>(
     null
   );
 
   async function updateTrades(url: string, sort: boolean = false) {
-    if (!tokenMetadata || !allTokensMetadata) return;
+    if (!allTokensMetadata) return;
     console.log(url);
     try {
       fetch(url, {
@@ -88,112 +92,47 @@ export default function TradeHistoryTable({
       })
         .then((response) => response.json())
         .then((data) => {
-          /* populate the trades list */
-          const tradesTemp: Trade[] = data.map((date: any) => {
-            const { id } = date;
-            const {
-              block_timestamp_nanosec,
-              balance_changes,
-              trader,
-              transaction_id,
-            } = date.event;
-            const otherToken =
-              Object.keys(balance_changes)[0] === tokenAddress
-                ? Object.keys(balance_changes)[1]
-                : Object.keys(balance_changes)[0];
+          console.log(data);
+          const tableRowsTemp: TradeTableRow[] = data.map((date: any) =>
+            tradeEventToRow(date.event, tokenAddress, allTokensMetadata)
+          );
 
-            /* get rid of the - in front of the string */
-            return {
-              id,
-              timestamp: block_timestamp_nanosec,
-              type: balance_changes[tokenAddress] < 0 ? "sell" : "buy",
-              qtyToken: balance_changes[tokenAddress].replace(/^-/, ""),
-              qtyOtherToken: balance_changes[otherToken].replace(/^-/, ""),
-              otherTokenAddress: otherToken,
-              maker: trader,
-              txn: transaction_id,
-            };
-          });
-
-          if (sort) {
-            tradesTemp.sort((a, b) => b.id - a.id);
+          if (tableRowsTemp[0]) {
+            setLastId(tableRowsTemp[0].id);
+            setFirstId(tableRowsTemp[tableRowsTemp.length - 1].id);
+            setLatestTimestamp(tableRowsTemp[0].timestamp);
+            setTableRows(tableRowsTemp);
+          } else {
+            console.log("No trading data found");
           }
-          setTrades(tradesTemp);
-          console.log(tradesTemp);
-
-          /* populate the rows list */
-          const tableRowsTemp = tradesTemp.map((trade: Trade) => {
-            const otherToken = allTokensMetadata[trade.otherTokenAddress];
-            const time = timestampToTimeDifference(trade.timestamp);
-            const amount = convertIntToFloat(
-              trade.qtyToken.toString(),
-              tokenMetadata.decimals
-            );
-
-            let swappedFor = "unknown";
-            if (otherToken) {
-              let ticker = otherToken.metadata.symbol;
-              let swapQty = convertIntToFloat(
-                trade.qtyOtherToken.toString(),
-                otherToken.metadata.decimals
-              );
-              swappedFor = `${formatNumber(swapQty)} ${ticker}`;
-            }
-            const txnLink = (
-              <div>
-                <a
-                  href={`https://nearblocks.io/txns/${trade.txn}`}
-                  target="_blank"
-                >
-                  <FaExternalLinkAlt />
-                </a>
-              </div>
-            );
-            const row: Row = {
-              id: trade.id,
-              time,
-              type: trade.type,
-              amount: formatNumber(amount),
-              for: swappedFor,
-              price: "coming soon",
-              maker: truncateString(trade.maker, 20),
-              txn: txnLink,
-            };
-            return row;
-          });
-
-          setLastId(tableRowsTemp[0].id);
-          setFirstId(tableRowsTemp[tableRowsTemp.length - 1].id);
-          setLatestTimestamp(tradesTemp[0].timestamp);
-          setTableRows(tableRowsTemp);
         });
     } catch (error) {
       console.log(error);
     }
   }
 
+  const { sendMessage } = useWebSocket(`${WEBSOCKET_URL}`, {
+    onOpen: () => {
+      console.log("opened");
+    },
+    onMessage: (event) => {
+      let trade = JSON.parse(event.data);
+      let row = tradeEventToRow(trade, tokenAddress, allTokensMetadata);
+      setTableRows((previousRows) => {
+        if (!previousRows) return previousRows;
+        let tempRows = [...previousRows];
+        tempRows.pop();
+        return [row].concat(tempRows);
+      });
+    },
+  });
+
   useEffect(() => {
     try {
       fetch("https://prices.intear.tech/tokens", { method: "GET" })
         .then((response) => response.json())
         .then((data) => {
-          const token = data[tokenAddress];
-          if (!token) {
-            throw new Error(
-              `No information found for token Address ${tokenAddress}`
-            );
-          }
-          const { name, symbol, decimals } = token.metadata;
-          const priceUsd = token.price_usd;
-          const tokenMetadataTemp = {
-            name,
-            symbol,
-            decimals,
-            priceUsd,
-          };
-          setTokenMetadata(tokenMetadataTemp);
           setAllTokensMetadata(data);
-          setNearPrice(data["wrap.near"].price_usd);
         });
     } catch (e) {
       console.log(e);
@@ -201,30 +140,9 @@ export default function TradeHistoryTable({
   }, []);
 
   useEffect(() => {
-    if (tokenMetadata !== null && allTokensMetadata !== null) {
-      updateTrades(initUrl);
-    }
-  }, [tokenMetadata, allTokensMetadata]);
-
-  function previousPage() {
-    const firstEntryTemp =
-      firstEntry - entriesPerPage < 0 ? 0 : firstEntry - entriesPerPage;
-    if (firstEntryTemp === 0) {
-      updateTrades(initUrl);
-    } else {
-      updateTrades(
-        `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=AfterId&id=${lastId}&limit=${entriesPerPage}`,
-        true
-      );
-    }
-    setFirstEntry(firstEntryTemp);
-  }
-  function nextPage() {
-    setFirstEntry((prev) => prev + entriesPerPage);
-    updateTrades(
-      `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeId&id=${firstId}&limit=${entriesPerPage}`
-    );
-  }
+    if (!allTokensMetadata) return;
+    updateTrades(initUrl);
+  }, [allTokensMetadata]);
 
   function updateEntriesPerPage(entries: number) {
     setEntriesPerPage(entries);
@@ -235,6 +153,17 @@ export default function TradeHistoryTable({
       }&limit=${entries}`
     );
   }
+
+  useEffect(() => {
+    if (initialized) return;
+    sendMessage(JSON.stringify({ involved_token_account_ids: [tokenAddress] }));
+    setInitialized(true);
+  }, []);
+
+  function handleScroll() {
+    console.log("scroll");
+  }
+
   /* 
   Necessary Information
   Token Ticker
@@ -244,27 +173,9 @@ export default function TradeHistoryTable({
   */
   return (
     <div>
-      <div className="flex flex-col gap-2 ml-4 my-2">
-        <div className="flex gap-2">
-          {firstEntry === 0 ? (
-            <Button isDisabled>Previous</Button>
-          ) : (
-            <Button onClick={previousPage}>Previous</Button>
-          )}
-          <Button onClick={nextPage}>Next</Button>
-        </div>
-        <div>Results Per Page</div>
-        <div className="flex gap-2">
-          {entriesPerPageOptions.map((amount) => (
-            <Button key={amount} onClick={() => updateEntriesPerPage(amount)}>
-              {amount}
-            </Button>
-          ))}
-        </div>
-      </div>
       {tableRows && (
-        <div className="flex flex-col justify-center">
-          <Table>
+        <div className="mt-4 flex flex-col justify-center h-[300px]">
+          <Table className="h-full">
             <TableHeader columns={columns}>
               {(column) => (
                 <TableColumn key={column.key}>{column.label}</TableColumn>
@@ -274,9 +185,9 @@ export default function TradeHistoryTable({
               {(item) => (
                 <TableRow
                   key={item.id}
-                  className={
+                  className={`fade-in ${
                     item.type === "buy" ? "bg-green-200" : "bg-red-200"
-                  }
+                  }`}
                 >
                   {(columnKey) => (
                     <TableCell>{getKeyValue(item, columnKey)}</TableCell>
@@ -288,14 +199,6 @@ export default function TradeHistoryTable({
         </div>
       )}
       <div className="flex flex-col gap-2 ml-4 my-2">
-        <div className="flex gap-2">
-          {firstEntry === 0 ? (
-            <Button isDisabled>Previous</Button>
-          ) : (
-            <Button onClick={previousPage}>Previous</Button>
-          )}
-          <Button onClick={nextPage}>Next</Button>
-        </div>
         <div>Results Per Page</div>
         <div className="flex gap-2">
           {entriesPerPageOptions.map((amount) => (
