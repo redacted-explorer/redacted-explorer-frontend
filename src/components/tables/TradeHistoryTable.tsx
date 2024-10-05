@@ -135,7 +135,7 @@ export default function TradeHistoryTable({
 
   return (
     <div>
-      <div className="mt-4 flex flex-col justify-center h-[600px] dark">
+      <div className="mt-4 flex flex-col justify-center h-[600px]">
         <Table
           isHeaderSticky
           aria-label="Example table with infinite pagination"

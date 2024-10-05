@@ -33,8 +33,3 @@
   --background: #000000;
   --foreground: #00ec95;
 }
-
-html, body {
-  background-color: var(--background);
-  color: var(--foreground);
-}

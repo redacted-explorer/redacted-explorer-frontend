@@ -32,26 +32,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [nextui({
-    defaultTheme: "redacted",
-    themes: {
-      redacted: {
-        layout: {
-          radius: {
-            small: "0",
-            medium: "0",
-            large: "0",
-          },
-        },
-        colors: {
-          default: nearGreen,
-          content1: "#18181b",
-          content2: "#27272a",
-          content3: "#3f3f46",
-          content4: "#52525b",
-        },
-      },
-    }
-  })],
+  plugins: [nextui()],
 };
 export default config;
