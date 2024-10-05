@@ -54,8 +54,8 @@ export default function NearblocksLogo({ size }: { size: string }) {
   const [randomText, setRandomText] = useState(texts[0].url);
 
   useEffect(() => {
-    const randomLogo = weightedRandom(logos);
-    const randomText = weightedRandom(texts);
+    setRandomLogo(weightedRandom(logos));
+    setRandomText(weightedRandom(texts));
   }, []);
 
   return (
