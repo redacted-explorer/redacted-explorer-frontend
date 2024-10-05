@@ -70,15 +70,17 @@ export default function TradeHistoryTable({
       setHasMore(json.length > 0);
 
       // return if Metadata has not been loaded
-      if (!allTokensMetadata) return { items: [] };
+      if (!allTokensMetadata) {
+        return { items: [] };
+      }
 
       setIsLoading(false);
-      const tableRowsTemp: TradeTableRow[] = json.map((date: any) => {
+      const tableRowsTemp: TradeTableRow[] = json.map((data: any, i: number) => {
         const row = tradeEventToRow(
-          date.event,
+          data.event,
           tokenAddress,
           allTokensMetadata,
-          date.id,
+          data.id,
         );
         return row;
       });

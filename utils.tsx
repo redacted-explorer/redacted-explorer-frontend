@@ -129,10 +129,14 @@ export function tradeEventToRow(
 
   const time = <TimeAgo timestampNanosec={block_timestamp_nanosec} />;
   const timestamp = block_timestamp_nanosec;
-  const type = balance_changes[tokenAddress] < 0 ? "sell" : "buy";
+  const type = balance_changes[tokenAddress]
+    ? (balance_changes[tokenAddress] < 0 ? "sell" : "buy")
+    : "Arbitrage";
 
   /* get rid of the '-' in front of the swapped token */
-  let fromAmount = balance_changes[tokenAddress].replace(/^-/, "");
+  let fromAmount = balance_changes[tokenAddress]
+    ? balance_changes[tokenAddress].replace(/^-/, "")
+    : "🤡";
 
   if (tokenMetadata) {
     fromAmount = formatNumber(
@@ -140,17 +144,19 @@ export function tradeEventToRow(
     );
   }
   /* get other token information */
-  let swappedFor = "";
-  const qtyOtherToken = balance_changes[otherTokenAddress].replace(/^-/, "");
-  if (otherTokenMetadata) {
-    let ticker = otherTokenMetadata.metadata.symbol;
-    let swapQty = convertIntToFloat(
-      qtyOtherToken.toString(),
-      otherTokenMetadata.metadata.decimals
-    );
-    swappedFor = `${formatNumber(Number(swapQty))} ${ticker}`;
-  } else {
-    swappedFor = `${qtyOtherToken} ${otherTokenAddress}`;
+  let swappedFor = "Nothing";
+  if (balance_changes[otherTokenAddress]) {
+    const qtyOtherToken = balance_changes[otherTokenAddress].replace(/^-/, "");
+    if (otherTokenMetadata) {
+      let ticker = otherTokenMetadata.metadata.symbol;
+      let swapQty = convertIntToFloat(
+        qtyOtherToken.toString(),
+        otherTokenMetadata.metadata.decimals
+      );
+      swappedFor = `${formatNumber(Number(swapQty))} ${ticker}`;
+    } else {
+      swappedFor = `${qtyOtherToken} ${otherTokenAddress}`;
+    }
   }
 
   const txnLink = (
