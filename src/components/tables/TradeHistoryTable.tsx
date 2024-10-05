@@ -21,37 +21,14 @@ import {
 } from "../../../utils";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import useWebSocket from "react-use-websocket";
+import { useAsyncList } from "@react-stately/data";
+import { useInfiniteScroll } from "@nextui-org/use-infinite-scroll";
+import { Spinner } from "@nextui-org/react";
+import { SiTaketwointeractivesoftware } from "react-icons/si";
 
-type TokenMetadata = {
-  name: string;
-  symbol: string;
-  decimals: number;
-  priceUsd: string;
-};
-
-type Trade = {
-  id: number;
-  timestamp: number;
-  type: "buy" | "sell";
-  qtyToken: number;
-  qtyOtherToken: number;
-  otherTokenAddress: string;
-  maker: string;
-  txn: string;
-};
-
-type Row = {
-  id: number;
-  time: string;
-  type: "buy" | "sell";
-  amount: string;
-  for: string;
-  price: string;
-  maker: string;
-  txn: React.ReactNode;
-};
-
-const entriesPerPageOptions = [10, 25, 50];
+type Row = [
+  { id: number; key: string; trader: string; transaction_id: string }
+];
 
 export default function TradeHistoryTable({
   tokenAddress,
@@ -68,62 +45,64 @@ export default function TradeHistoryTable({
     { key: "txn", label: "TXN" },
   ];
 
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
   const WEBSOCKET_URL = "wss://ws-events.intear.tech/events/trade_swap";
-  const initUrl = `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=Newest&limit=${entriesPerPage}`;
-  const [firstEntry, setFirstEntry] = useState(0);
-  const [firstId, setFirstId] = useState<number | null>(null);
-  const [lastId, setLastId] = useState<number | null>(null);
-  const [latestTimestamp, setLatestTimestamp] = useState<number | null>(null);
-  const [tableRows, setTableRows] = useState<TradeTableRow[] | null>(null);
+  const INIT_URL = `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=Newest&limit=30`;
+  const [websocketInitialized, setWebsocketInitialized] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [time, setTime] = useState(Date.now());
+
   const [allTokensMetadata, setAllTokensMetadata] = useState<any>(null);
   const [nearPrice, setNearPrice] = useState(0);
-  const [initialized, setInitialized] = useState(false);
-  const [tokenMetadata, setTokenMetadata] = useState<TokenMetadata | null>(
-    null
-  );
 
-  async function updateTrades(url: string, sort: boolean = false) {
-    if (!allTokensMetadata) return;
-    console.log(url);
-    try {
-      fetch(url, {
-        method: "GET",
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log(data);
-          const tableRowsTemp: TradeTableRow[] = data.map((date: any) =>
-            tradeEventToRow(date.event, tokenAddress, allTokensMetadata)
-          );
+  let list = useAsyncList({
+    async load({ signal, cursor }) {
+      if (cursor) {
+        setIsLoading(false);
+      }
+      let res = await fetch(cursor || INIT_URL, {
+        signal,
+      });
+      let json = await res.json();
+      setHasMore(json.length > 0);
 
-          if (tableRowsTemp[0]) {
-            setLastId(tableRowsTemp[0].id);
-            setFirstId(tableRowsTemp[tableRowsTemp.length - 1].id);
-            setLatestTimestamp(tableRowsTemp[0].timestamp);
-            setTableRows(tableRowsTemp);
-          } else {
-            console.log("No trading data found");
-          }
-        });
-    } catch (error) {
-      console.log(error);
-    }
-  }
+      // return if Metadata has not been loaded
+      if (!allTokensMetadata) return { items: [] };
+
+      setIsLoading(false);
+      const tableRowsTemp: TradeTableRow[] = json.map((date: any) => {
+        const row = tradeEventToRow(
+          date.event,
+          tokenAddress,
+          allTokensMetadata,
+          date.id
+        );
+        return row;
+      });
+
+      return {
+        items: tableRowsTemp,
+        cursor: `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeId&id=${
+          tableRowsTemp[tableRowsTemp.length - 1].id
+        }&limit=10`,
+      };
+    },
+  });
+
+  const [loaderRef, scrollerRef] = useInfiniteScroll({
+    hasMore,
+    onLoadMore: list.loadMore,
+  });
 
   const { sendMessage } = useWebSocket(`${WEBSOCKET_URL}`, {
     onOpen: () => {
       console.log("opened");
+      setWebsocketInitialized(false);
     },
     onMessage: (event) => {
-      let trade = JSON.parse(event.data);
+      const trade = JSON.parse(event.data);
       let row = tradeEventToRow(trade, tokenAddress, allTokensMetadata);
-      setTableRows((previousRows) => {
-        if (!previousRows) return previousRows;
-        let tempRows = [...previousRows];
-        tempRows.pop();
-        return [row].concat(tempRows);
-      });
+      list.insert(0, row);
     },
   });
 
@@ -140,73 +119,61 @@ export default function TradeHistoryTable({
   }, []);
 
   useEffect(() => {
-    if (!allTokensMetadata) return;
-    updateTrades(initUrl);
+    list.reload();
   }, [allTokensMetadata]);
 
-  function updateEntriesPerPage(entries: number) {
-    setEntriesPerPage(entries);
-    if (!latestTimestamp) return;
-    updateTrades(
-      `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeTimestamp&timestamp_nanosec=${
-        Number(latestTimestamp) + 10000
-      }&limit=${entries}`
-    );
-  }
-
   useEffect(() => {
-    if (initialized) return;
-    sendMessage(JSON.stringify({ involved_token_account_ids: [tokenAddress] }));
-    setInitialized(true);
-  }, []);
+    if (websocketInitialized) return;
+    sendMessage(
+      JSON.stringify({ involved_token_account_ids: ["gear.enleap.near"] })
+    );
+    console.log("message sent");
+    setWebsocketInitialized(true);
+  }, [websocketInitialized]);
 
-  function handleScroll() {
-    console.log("scroll");
-  }
-
-  /* 
-  Necessary Information
-  Token Ticker
-  Token Price
-  Current NEAR price
-  Current Token Price in NEAR
-  */
   return (
     <div>
-      {tableRows && (
-        <div className="mt-4 flex flex-col justify-center h-[300px]">
-          <Table className="h-full">
-            <TableHeader columns={columns}>
-              {(column) => (
-                <TableColumn key={column.key}>{column.label}</TableColumn>
-              )}
-            </TableHeader>
-            <TableBody items={tableRows}>
-              {(item) => (
-                <TableRow
-                  key={item.id}
-                  className={`fade-in ${
-                    item.type === "buy" ? "bg-green-200" : "bg-red-200"
-                  }`}
-                >
-                  {(columnKey) => (
-                    <TableCell>{getKeyValue(item, columnKey)}</TableCell>
-                  )}
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-      <div className="flex flex-col gap-2 ml-4 my-2">
-        <div>Results Per Page</div>
-        <div className="flex gap-2">
-          {entriesPerPageOptions.map((amount) => (
-            <Button key={amount} onClick={() => updateEntriesPerPage(amount)}>
-              {amount}
-            </Button>
-          ))}
-        </div>
+      <div className="mt-4 flex flex-col justify-center h-[300px]">
+        <Table
+          isHeaderSticky
+          aria-label="Example table with infinite pagination"
+          baseRef={scrollerRef}
+          bottomContent={
+            hasMore ? (
+              <div className="flex w-full justify-center">
+                <Spinner ref={loaderRef} color="current" />
+              </div>
+            ) : null
+          }
+          classNames={{
+            base: "max-h-[320px] overflow-scroll",
+            table: "min-h-[400px]",
+          }}
+        >
+          <TableHeader columns={columns}>
+            {(column) => (
+              <TableColumn key={column.key}>{column.label}</TableColumn>
+            )}
+          </TableHeader>
+          <TableBody
+            isLoading={isLoading}
+            items={list.items}
+            loadingContent={<Spinner color="current" />}
+          >
+            {(item: any) => (
+              <TableRow
+                key={item.id}
+                className={`fade-in ${
+                  item.type === "buy" ? "bg-green-200" : "bg-red-200"
+                }`}
+              >
+                {(columnKey) => (
+                  <TableCell>{getKeyValue(item, columnKey)}</TableCell>
+                )}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

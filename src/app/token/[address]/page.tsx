@@ -1,3 +1,4 @@
+import TradeHistoryInfiniteTable from "@/components/tables/TradeHistoryInfiniteTable";
 import TradeHistoryTable from "@/components/tables/TradeHistoryTable";
 
 export default function Page({ params }: { params: { address: string } }) {

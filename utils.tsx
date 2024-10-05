@@ -1,7 +1,8 @@
 import { FaExternalLinkAlt } from "react-icons/fa";
 
 export type TradeTableRow = {
-  id: number;
+  id?: number;
+  key: string;
   time: string;
   timestamp: number;
   type: string;
@@ -110,8 +111,12 @@ export function formatNumber(number: number) {
 export function tradeEventToRow(
   event: any,
   tokenAddress: string,
-  allTokensMetadata: any
+  allTokensMetadata: any,
+  id?: number
 ): TradeTableRow {
+  console.log("in trade event to row");
+  console.log(event);
+
   const { block_timestamp_nanosec, balance_changes, trader, transaction_id } =
     event;
   const otherTokenAddress =
@@ -126,8 +131,8 @@ export function tradeEventToRow(
   const type = balance_changes[tokenAddress] < 0 ? "sell" : "buy";
 
   /* get rid of the '-' in front of the swapped token */
-
   let fromAmount = balance_changes[tokenAddress].replace(/^-/, "");
+
   if (tokenMetadata) {
     fromAmount = formatNumber(
       Number(convertIntToFloat(fromAmount, tokenMetadata.metadata.decimals))
@@ -154,9 +159,9 @@ export function tradeEventToRow(
       </a>
     </div>
   );
-
   const row: TradeTableRow = {
-    id: transaction_id,
+    id,
+    key: event.transaction_id,
     time,
     timestamp,
     type,
@@ -166,5 +171,6 @@ export function tradeEventToRow(
     maker: truncateString(trader, 20),
     txn: txnLink,
   };
+  console.log("Returning the following row", row);
   return row;
 }
