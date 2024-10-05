@@ -26,6 +26,7 @@ import { useInfiniteScroll } from "@nextui-org/use-infinite-scroll";
 import { Spinner } from "@nextui-org/react";
 import { SiTaketwointeractivesoftware } from "react-icons/si";
 import GlitchText from "../ui/LoadingGlitch";
+import { TimeProvider } from "../ui/TimeAgo";
 
 type Row = [
   { id: number; key: string; trader: string; transaction_id: string }
@@ -53,7 +54,6 @@ export default function TradeHistoryTable({
   const [websocketInitialized, setWebsocketInitialized] = useState(true);
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [time, setTime] = useState(Date.now());
 
   const [allTokensMetadata, setAllTokensMetadata] = useState<any>(null);
   const [nearPrice, setNearPrice] = useState(0);
@@ -78,7 +78,7 @@ export default function TradeHistoryTable({
           date.event,
           tokenAddress,
           allTokensMetadata,
-          date.id
+          date.id,
         );
         return row;
       });
@@ -136,49 +136,51 @@ export default function TradeHistoryTable({
   return (
     <div>
       <div className="mt-4 flex flex-col justify-center h-[600px]">
-        <Table
-          isHeaderSticky
-          aria-label="Example table with infinite pagination"
-          baseRef={scrollerRef}
-          bottomContent={
-            hasMore ? (
-              <div className="flex w-full justify-center">
-                <Spinner ref={loaderRef} color="current" />
-              </div>
-            ) : null
-          }
-          classNames={{
-            base: "overflow-scroll",
-            table: "min-h-[400px]",
-          }}
-        >
-          <TableHeader columns={columns}>
-            {(column) => (
-              <TableColumn key={column.key}>{column.label}</TableColumn>
-            )}
-          </TableHeader>
-          <TableBody
-            isLoading={isLoading}
-            items={list.items}
-            loadingContent={
-              <GlitchText isLoading={isLoading}>
-                Loading...
-              </GlitchText>
+        <TimeProvider>
+          <Table
+            isHeaderSticky
+            aria-label="Example table with infinite pagination"
+            baseRef={scrollerRef}
+            bottomContent={
+              hasMore ? (
+                <div className="flex w-full justify-center">
+                  <Spinner ref={loaderRef} color="current" />
+                </div>
+              ) : null
             }
+            classNames={{
+              base: "overflow-scroll",
+              table: "min-h-[400px]",
+            }}
           >
-            {(item: any) => (
-              <TableRow
-                key={item.id}
-                className={`fade-in ${item.type === "buy" ? "text-near-green-400" : "text-red-400"
-                  }`}
-              >
-                {(columnKey) => (
-                  <TableCell>{getKeyValue(item, columnKey)}</TableCell>
-                )}
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            <TableHeader columns={columns}>
+              {(column) => (
+                <TableColumn key={column.key}>{column.label}</TableColumn>
+              )}
+            </TableHeader>
+            <TableBody
+              isLoading={isLoading}
+              items={list.items}
+              loadingContent={
+                <GlitchText isLoading={isLoading}>
+                  Loading...
+                </GlitchText>
+              }
+            >
+              {(item: any) => (
+                <TableRow
+                  key={item.id}
+                  className={`fade-in ${item.type === "buy" ? "text-near-green-400" : "text-red-400"
+                    }`}
+                >
+                  {(columnKey) => (
+                    <TableCell>{getKeyValue(item, columnKey)}</TableCell>
+                  )}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TimeProvider>
       </div>
     </div>
   );

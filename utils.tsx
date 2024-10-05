@@ -1,9 +1,10 @@
+import { TimeAgo } from "@/components/ui/TimeAgo";
 import { FaExternalLinkAlt } from "react-icons/fa";
 
 export type TradeTableRow = {
   id?: number;
   key: string;
-  time: string;
+  time: React.ReactNode;
   timestamp: number;
   type: string;
   fromAmount: string;
@@ -19,11 +20,11 @@ export type TokenMetadata = {
   decimals: number;
 };
 
-export function timestampToTimeDifference(timestamp: number): string {
+export function timestampToTimeDifference(timestampNanosec: number, currentTime?: Date): string {
   /* timestamp is in nanoseconds, Date().getTime() in milliseconds */
-  timestamp = timestamp / 1000000;
-  const now = new Date().getTime();
-  let difference = Math.abs(now - timestamp);
+  timestampNanosec = timestampNanosec / 1000000;
+  const now = currentTime ? currentTime.getTime() : new Date().getTime();
+  let difference = Math.abs(now - timestampNanosec);
   const days = Math.floor(difference / (1000 * 60 * 60 * 24));
   difference -= days * (1000 * 60 * 60 * 24);
 
@@ -112,7 +113,7 @@ export function tradeEventToRow(
   event: any,
   tokenAddress: string,
   allTokensMetadata: any,
-  id?: number
+  id?: number,
 ): TradeTableRow {
   console.log("in trade event to row");
   console.log(event);
@@ -126,7 +127,7 @@ export function tradeEventToRow(
   const tokenMetadata = allTokensMetadata[tokenAddress];
   const otherTokenMetadata = allTokensMetadata[otherTokenAddress];
 
-  const time = timestampToTimeDifference(block_timestamp_nanosec);
+  const time = <TimeAgo timestampNanosec={block_timestamp_nanosec} />;
   const timestamp = block_timestamp_nanosec;
   const type = balance_changes[tokenAddress] < 0 ? "sell" : "buy";
 
