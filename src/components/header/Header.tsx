@@ -18,15 +18,12 @@ export default function Header() {
   }
 
   return (
-    <div className="p-4 border-b-gray-200 border-b-2">
+    <div className="p-4 border-b-near-green-200 border-b-2">
       <div className="flex justify-between items-center">
         <div>
-          <ExplorerLogo height={"35px"} />
+          <ExplorerLogo size={"35px"} />
         </div>
         <div className="flex space-x-4">
-          <button>
-            <IoSunnyOutline />
-          </button>
           <button
             className="flex items-center justify-center"
             onClick={toggleHidden}

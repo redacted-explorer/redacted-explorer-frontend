@@ -12,7 +12,7 @@ export default function Pill({
   return (
     <button
       className={`${
-        active ? "text-white bg-[#042f2e]" : "bg-gray-200"
+        active ? "text-black bg-near-green-300" : "bg-near-green-800 text-near-green-100"
       } rounded-lg text-xs px-2 py-2`}
       onClick={setActive}
     >

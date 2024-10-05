@@ -3,5 +3,5 @@ export default function CardBody({
 }: {
   children: React.ReactNode[];
 }) {
-  return <div className="px-2 divide-y divide-gray-200">{children}</div>;
+  return <div className="px-2 divide-y divide-near-green-200">{children}</div>;
 }

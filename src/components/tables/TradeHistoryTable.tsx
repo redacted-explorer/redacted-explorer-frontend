@@ -25,10 +25,13 @@ import { useAsyncList } from "@react-stately/data";
 import { useInfiniteScroll } from "@nextui-org/use-infinite-scroll";
 import { Spinner } from "@nextui-org/react";
 import { SiTaketwointeractivesoftware } from "react-icons/si";
+import GlitchText from "../ui/LoadingGlitch";
 
 type Row = [
   { id: number; key: string; trader: string; transaction_id: string }
 ];
+
+const ENTRIES_PER_REQUEST = 50;
 
 export default function TradeHistoryTable({
   tokenAddress,
@@ -46,7 +49,7 @@ export default function TradeHistoryTable({
   ];
 
   const WEBSOCKET_URL = "wss://ws-events.intear.tech/events/trade_swap";
-  const INIT_URL = `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=Newest&limit=30`;
+  const INIT_URL = `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=Newest&limit=${ENTRIES_PER_REQUEST}`;
   const [websocketInitialized, setWebsocketInitialized] = useState(true);
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,9 +85,8 @@ export default function TradeHistoryTable({
 
       return {
         items: tableRowsTemp,
-        cursor: `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeId&id=${
-          tableRowsTemp[tableRowsTemp.length - 1].id
-        }&limit=10`,
+        cursor: `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeId&id=${tableRowsTemp[tableRowsTemp.length - 1].id
+          }&limit=${ENTRIES_PER_REQUEST}`,
       };
     },
   });
@@ -125,7 +127,7 @@ export default function TradeHistoryTable({
   useEffect(() => {
     if (websocketInitialized) return;
     sendMessage(
-      JSON.stringify({ involved_token_account_ids: ["gear.enleap.near"] })
+      JSON.stringify({ involved_token_account_ids: [tokenAddress] })
     );
     console.log("message sent");
     setWebsocketInitialized(true);
@@ -133,7 +135,7 @@ export default function TradeHistoryTable({
 
   return (
     <div>
-      <div className="mt-4 flex flex-col justify-center h-[300px]">
+      <div className="mt-4 flex flex-col justify-center h-[600px] dark">
         <Table
           isHeaderSticky
           aria-label="Example table with infinite pagination"
@@ -146,7 +148,7 @@ export default function TradeHistoryTable({
             ) : null
           }
           classNames={{
-            base: "max-h-[320px] overflow-scroll",
+            base: "overflow-scroll",
             table: "min-h-[400px]",
           }}
         >
@@ -158,14 +160,17 @@ export default function TradeHistoryTable({
           <TableBody
             isLoading={isLoading}
             items={list.items}
-            loadingContent={<Spinner color="current" />}
+            loadingContent={
+              <GlitchText isLoading={isLoading}>
+                Loading...
+              </GlitchText>
+            }
           >
             {(item: any) => (
               <TableRow
                 key={item.id}
-                className={`fade-in ${
-                  item.type === "buy" ? "bg-green-200" : "bg-red-200"
-                }`}
+                className={`fade-in ${item.type === "buy" ? "text-near-green-400" : "text-red-400"
+                  }`}
               >
                 {(columnKey) => (
                   <TableCell>{getKeyValue(item, columnKey)}</TableCell>

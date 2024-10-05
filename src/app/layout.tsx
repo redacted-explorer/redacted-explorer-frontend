@@ -4,7 +4,7 @@ import Header from "@/components/header/Header";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "NEAR Explorer",
+  title: "[Redacted] Explorer",
   description: "Your navigation through NEAR",
 };
 

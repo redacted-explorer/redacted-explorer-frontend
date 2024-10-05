@@ -192,7 +192,7 @@ export default function TransferTable({ accountId }: { accountId: string }) {
         </div>
       </div>
       {tableRows && (
-        <div className="flex flex-col justify-center">
+        <div className="flex flex-col justify-center dark">
           <Table>
             <TableHeader columns={columns}>
               {(column) => (
