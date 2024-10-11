@@ -7,7 +7,7 @@ const GlitchText = ({ children, isLoading }: { children: ReactNode, isLoading: b
   const contentRef = useRef(null);
 
   const blackColor = '#000000';
-  const tealColor = '#00ec95';
+  const tealColor = '#00ec97';
   const maxRects = 75;
 
   const createGlitchRect = useCallback((color: string) => {
@@ -31,7 +31,7 @@ const GlitchText = ({ children, isLoading }: { children: ReactNode, isLoading: b
     const rect = createGlitchRect(color);
     if (rect) {
       svgRef.current.appendChild(rect);
-      
+
       setTimeout(() => {
         if (svgRef.current && svgRef.current.contains(rect)) {
           svgRef.current.removeChild(rect);
@@ -81,7 +81,7 @@ const GlitchText = ({ children, isLoading }: { children: ReactNode, isLoading: b
 
     const addHighlight = () => {
       if (!contentRef.current) return;
-      
+
       const allTextNodes = getAllTextNodes(contentRef.current);
       if (allTextNodes.length === 0) return;
 
@@ -93,20 +93,20 @@ const GlitchText = ({ children, isLoading }: { children: ReactNode, isLoading: b
       const startWordIndex = Math.floor(Math.random() * words.length);
       const wordCount = Math.min(Math.floor(Math.random() * 3) + 1, words.length - startWordIndex);
       const endWordIndex = startWordIndex + wordCount;
-      
+
       const startOffset = words.slice(0, startWordIndex).join(' ').length + (startWordIndex > 0 ? 1 : 0);
       const endOffset = words.slice(0, endWordIndex).join(' ').length;
-      
+
       const range = document.createRange();
       range.setStart(randomTextNode, startOffset);
       range.setEnd(randomTextNode, endOffset);
-      
+
       const highlightSpan = document.createElement('span');
       highlightSpan.className = 'highlight';
       range.surroundContents(highlightSpan);
-      
+
       highlightedElements.add(highlightSpan);
-      
+
       const duration = Math.random() * 700 + 100;
       setTimeout(() => {
         if (highlightSpan.parentNode) {
@@ -117,7 +117,7 @@ const GlitchText = ({ children, isLoading }: { children: ReactNode, isLoading: b
     };
 
     const runHighlight = () => {
-    addHighlight();
+      addHighlight();
       highlightInterval = setTimeout(runHighlight, Math.random() * 500 + 100);
     };
 
@@ -150,7 +150,7 @@ const GlitchText = ({ children, isLoading }: { children: ReactNode, isLoading: b
   }, [isLoading, animateGlitch]);
 
   return (
-    <div ref={containerRef} className="glitch-component" style={{ position: 'relative', overflow: 'hidden', backgroundColor: '#000000', color: '#00ec95', fontFamily: 'Arial, sans-serif', height: '100%', width: '100%' }}>
+    <div ref={containerRef} className="glitch-component" style={{ position: 'relative', overflow: 'hidden', backgroundColor: '#000000', color: '#00ec97', fontFamily: 'Arial, sans-serif', height: '100%', width: '100%' }}>
       <div className="content-container" style={{ position: 'relative', padding: '20px' }}>
         <div ref={contentRef} className="content">
           {children}
@@ -159,15 +159,15 @@ const GlitchText = ({ children, isLoading }: { children: ReactNode, isLoading: b
       <svg ref={svgRef} className="glitch-overlay" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2, mixBlendMode: 'screen' }}>
         <defs>
           <filter id="noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" result="noise"/>
-            <feColorMatrix in="noise" type="saturate" values="0"/>
+            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" result="noise" />
+            <feColorMatrix in="noise" type="saturate" values="0" />
           </filter>
         </defs>
-        <rect width="100%" height="100%" filter="url(#noise)" opacity="0.07"/>
+        <rect width="100%" height="100%" filter="url(#noise)" opacity="0.07" />
       </svg>
       <style jsx>{`
         .highlight {
-          background-color: #00ec95;
+          background-color: #00ec97;
           color: #000000;
         }
       `}</style>

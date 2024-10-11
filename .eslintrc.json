@@ -1,5 +1,6 @@
 {
   "extends": ["next/core-web-vitals", "next/typescript"],
+  "ignores": ["src/public/charting_library"],
   "rules": {
     "prefer-const": "off",
     "@typescript-eslint/no-unused-vars": "off",
