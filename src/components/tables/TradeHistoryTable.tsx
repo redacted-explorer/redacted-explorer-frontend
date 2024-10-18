@@ -1,36 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Button } from "@nextui-org/button";
-
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableColumn,
-  TableRow,
-  TableCell,
-  getKeyValue,
-} from "@nextui-org/table";
-import {
-  convertIntToFloat,
-  formatNumber,
-  timestampToTimeDifference,
-  tradeEventToRow,
-  TradeTableRow,
-  truncateString,
-} from "../../../utils";
-import { FaExternalLinkAlt } from "react-icons/fa";
+import { tradeEventToRow, TradeTableRow } from "../../../utils";
 import useWebSocket from "react-use-websocket";
 import { useAsyncList } from "@react-stately/data";
 import { useInfiniteScroll } from "@nextui-org/use-infinite-scroll";
-import { Spinner } from "@nextui-org/react";
-import { SiTaketwointeractivesoftware } from "react-icons/si";
-import GlitchText from "../ui/LoadingGlitch";
 import { TimeProvider } from "../ui/TimeAgo";
-
-type Row = [
-  { id: number; key: string; trader: string; transaction_id: string }
-];
+import TableInfiniteScroll from "../ui/TableInfiniteScroll";
 
 const ENTRIES_PER_REQUEST = 50;
 
@@ -56,7 +31,6 @@ export default function TradeHistoryTable({
   const [isLoading, setIsLoading] = useState(true);
 
   const [allTokensMetadata, setAllTokensMetadata] = useState<any>(null);
-  const [nearPrice, setNearPrice] = useState(0);
 
   let list = useAsyncList({
     async load({ signal, cursor }) {
@@ -75,27 +49,25 @@ export default function TradeHistoryTable({
       }
 
       setIsLoading(false);
-      const tableRowsTemp: TradeTableRow[] = json.map((data: any, i: number) => {
-        const row = tradeEventToRow(
-          data.event,
-          tokenAddress,
-          allTokensMetadata,
-          data.id,
-        );
-        return row;
-      });
+      const tableRowsTemp: TradeTableRow[] = json.map(
+        (data: any, i: number) => {
+          const row = tradeEventToRow(
+            data.event,
+            tokenAddress,
+            allTokensMetadata,
+            data.id
+          );
+          return row;
+        }
+      );
 
       return {
         items: tableRowsTemp,
-        cursor: `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeId&id=${tableRowsTemp[tableRowsTemp.length - 1].id
-          }&limit=${ENTRIES_PER_REQUEST}`,
+        cursor: `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeId&id=${
+          tableRowsTemp[tableRowsTemp.length - 1].id
+        }&limit=${ENTRIES_PER_REQUEST}`,
       };
     },
-  });
-
-  const [loaderRef, scrollerRef] = useInfiniteScroll({
-    hasMore,
-    onLoadMore: list.loadMore,
   });
 
   const { sendMessage } = useWebSocket(`${WEBSOCKET_URL}`, {
@@ -128,9 +100,7 @@ export default function TradeHistoryTable({
 
   useEffect(() => {
     if (websocketInitialized) return;
-    sendMessage(
-      JSON.stringify({ involved_token_account_ids: [tokenAddress] })
-    );
+    sendMessage(JSON.stringify({ involved_token_account_ids: [tokenAddress] }));
     console.log("message sent");
     setWebsocketInitialized(true);
   }, [websocketInitialized]);
@@ -139,49 +109,12 @@ export default function TradeHistoryTable({
     <div>
       <div className="mt-4 flex flex-col justify-center h-[600px]">
         <TimeProvider>
-          <Table
-            isHeaderSticky
-            aria-label="Example table with infinite pagination"
-            baseRef={scrollerRef}
-            bottomContent={
-              hasMore ? (
-                <div className="flex w-full justify-center">
-                  <Spinner ref={loaderRef} color="current" />
-                </div>
-              ) : null
-            }
-            classNames={{
-              base: "overflow-scroll",
-              table: "min-h-[400px]",
-            }}
-          >
-            <TableHeader columns={columns}>
-              {(column) => (
-                <TableColumn key={column.key}>{column.label}</TableColumn>
-              )}
-            </TableHeader>
-            <TableBody
-              isLoading={isLoading}
-              items={list.items}
-              loadingContent={
-                <GlitchText isLoading={isLoading}>
-                  Loading...
-                </GlitchText>
-              }
-            >
-              {(item: any) => (
-                <TableRow
-                  key={item.id}
-                  className={`fade-in ${item.type === "buy" ? "text-near-green-400" : "text-red-400"
-                    }`}
-                >
-                  {(columnKey) => (
-                    <TableCell>{getKeyValue(item, columnKey)}</TableCell>
-                  )}
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <TableInfiniteScroll
+            hasMore={hasMore}
+            isLoading={isLoading}
+            list={list}
+            columns={columns}
+          />
         </TimeProvider>
       </div>
     </div>

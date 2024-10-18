@@ -11,6 +11,7 @@ import {
   TableCell,
   getKeyValue,
 } from "@nextui-org/table";
+import TablePaginated from "@/components/ui/TablePaginated";
 
 type Transaction = {
   id: number;
@@ -20,29 +21,35 @@ type Transaction = {
 };
 
 const columns = [
+  { key: "id", label: "ID" },
   { key: "signerId", label: "SIGNER" },
   { key: "receiverId", label: "RECEIVER" },
   { key: "transactionId", label: "TRANSACTION" },
 ];
 
-const resultsPerPage = [10, 25, 50];
+const entriesPerPageList = [10, 25, 50];
 
 export default function Page({ params }: { params: { address: string } }) {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [page, setPage] = useState(0);
   const [firstId, setFirstId] = useState<number | null>(null);
   const [lastId, setLastId] = useState<number | null>(null);
+  const [firstIndex, setFirstIndex] = useState(0);
+  const [firstPage, setFirstPage] = useState(true);
+  const [lastPage, setLastPage] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[] | null>(null);
 
-  async function updateTransactions(url: string, sort: boolean = false) {
+  async function fetchTransactions(
+    url: string,
+    sort: boolean = false
+  ): Promise<Transaction[]> {
     try {
-      fetch(url, {
+      return fetch(url, {
         method: "GET",
       })
         .then((response) => response.json())
         .then((data) => {
           console.log("update transactions");
-          const transactions_temp: Transaction[] = data.map((tx: any) => {
+          const transactionsTemp: Transaction[] = data.map((tx: any) => {
             return {
               id: tx.id,
               signerId: tx.event.signer_id,
@@ -50,94 +57,96 @@ export default function Page({ params }: { params: { address: string } }) {
               transactionId: tx.event.transaction_id,
             };
           });
-          if (sort) {
-            transactions_temp.sort((a, b) => a.id - b.id);
-          }
-          setTransactions(transactions_temp);
+          if (sort) transactionsTemp.reverse();
+          return transactionsTemp;
         });
     } catch (error) {
       console.log(error);
+      return [];
     }
   }
 
   useEffect(() => {
     const initialFetch = async () => {
-      updateTransactions(
+      const txs = await fetchTransactions(
         `https://events.intear.tech/query/tx_transaction?pagination_by=Newest&limit=${entriesPerPage}`
       );
+      setTransactions(txs);
+      if (txs.length < entriesPerPage) setLastPage(true);
+      setFirstId(txs[0].id);
+      setLastId(txs[txs.length - 1].id);
     };
     initialFetch();
   }, []);
 
-  useEffect(() => {
-    if (!transactions) return;
-    console.log(transactions);
-    setFirstId(transactions[0].id);
-    setLastId(transactions[transactions.length - 1].id);
-  }, [transactions]);
-
-  function nextPage() {
-    updateTransactions(
-      `https://events.intear.tech/query/tx_transaction?pagination_by=AfterId&id=${lastId}&limit=${entriesPerPage}`
+  async function nextPage() {
+    const txs = await fetchTransactions(
+      `https://events.intear.tech/query/tx_transaction?pagination_by=BeforeId&id=${lastId}&limit=${entriesPerPage}`
     );
-    setPage((prev) => prev + 1);
+    if (txs.length < entriesPerPage) {
+      setLastPage(true);
+      if (txs.length === 0) return;
+    }
+    if (firstPage) setFirstPage(false);
+    setFirstIndex((previous) => previous + txs.length);
+    setFirstId(txs[0].id);
+    setLastId(txs[txs.length - 1].id);
+    setTransactions(txs);
   }
 
-  function previousPage() {
-    updateTransactions(
-      `https://events.intear.tech/query/tx_transaction?pagination_by=BeforeId&id=${firstId}&limit=${entriesPerPage}`,
+  async function previousPage() {
+    let afterId;
+    if (firstIndex < entriesPerPage) {
+      afterId = transactions![entriesPerPage - firstIndex].id;
+      setFirstIndex(0);
+      setFirstPage(true);
+    } else {
+      afterId = firstId;
+      if (firstIndex == entriesPerPage) setFirstPage(true);
+      setFirstIndex((prev) => prev - entriesPerPage);
+    }
+    const txs = await fetchTransactions(
+      `https://events.intear.tech/query/tx_transaction?pagination_by=AfterId&id=${afterId}&limit=${entriesPerPage}`,
       true
     );
-    setPage((prev) => prev - 1);
+    setFirstId(txs[0].id);
+    setLastId(txs[txs.length - 1].id);
+    setTransactions(txs);
   }
 
-  function updateEntriesPerPage(entries: number) {
+  async function updateEntriesPerPage(entries: number) {
     setEntriesPerPage(entries);
-    updateTransactions(
-      `https://events.intear.tech/query/tx_transaction?pagination_by=AfterId&id=${lastId}&limit=${entries}`
+    if (!firstId) {
+      console.log("No Entries");
+      return;
+    }
+    const txs = await fetchTransactions(
+      `https://events.intear.tech/query/tx_transaction?pagination_by=BeforeId&id=${
+        firstId + 1
+      }&limit=${entries}`
     );
+    if (txs.length < entries) {
+      setLastPage(true);
+    }
+    setFirstId(txs[0].id);
+    setLastId(txs[txs.length - 1].id);
+    setTransactions(txs);
   }
 
   return (
     <div>
       {transactions && (
-        <div className="flex flex-col justify-center">
-          <Table>
-            <TableHeader columns={columns}>
-              {(column) => (
-                <TableColumn key={column.key}>{column.label}</TableColumn>
-              )}
-            </TableHeader>
-            <TableBody items={transactions}>
-              {(item) => (
-                <TableRow key={item.id}>
-                  {(columnKey) => (
-                    <TableCell>{getKeyValue(item, columnKey)}</TableCell>
-                  )}
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <TablePaginated
+          columns={columns}
+          rows={transactions}
+          firstPage={firstPage}
+          lastPage={lastPage}
+          entriesPerPageList={entriesPerPageList}
+          updateEntriesPerPage={updateEntriesPerPage}
+          nextPage={nextPage}
+          previousPage={previousPage}
+        />
       )}
-      <div className="flex flex-col gap-2 ml-4 my-2">
-        <div className="flex gap-2">
-          {page === 0 ? (
-            <Button isDisabled>Previous</Button>
-          ) : (
-            <Button onClick={previousPage}>Previous</Button>
-          )}
-          <Button onClick={nextPage}>Next</Button>
-        </div>
-        <div>Results Per Page</div>
-        <div className="flex gap-2">
-          {resultsPerPage.map((amount) => (
-            <Button key={amount} onClick={() => updateEntriesPerPage(amount)}>
-              {amount}
-            </Button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

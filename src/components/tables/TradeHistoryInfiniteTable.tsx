@@ -7,14 +7,13 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Pagination,
   Spinner,
   getKeyValue,
-  Button,
 } from "@nextui-org/react";
 import { useAsyncList } from "@react-stately/data";
 import { useInfiniteScroll } from "@nextui-org/use-infinite-scroll";
 import useWebSocket from "react-use-websocket";
+import TableInfiniteScroll from "../ui/TableInfiniteScroll";
 
 export default function TradeHistoryInfiniteTable() {
   const WEBSOCKET_URL = "wss://ws-events.intear.tech/events/trade_swap";
@@ -73,6 +72,13 @@ export default function TradeHistoryInfiniteTable() {
 
   return (
     <div className="flex flex-col justify-center items-center">
+      <TableInfiniteScroll
+        loaderRef={loaderRef}
+        scrollerRef={scrollerRef}
+        hasMore={hasMore}
+        isLoading={isLoading}
+        list={list}
+      />
       <Table
         isHeaderSticky
         aria-label="Example table with infinite pagination"
@@ -106,14 +112,6 @@ export default function TradeHistoryInfiniteTable() {
           )}
         </TableBody>
       </Table>
-
-      {/*       <div>
-        {list.items.map((item: any) => {
-          return <div key={item}>{item}</div>;
-        })}
-      </div>
-      <Button onClick={list.loadMore}>Load More</Button>
-      <div>Oldest: {oldestId}</div> */}
     </div>
   );
 }
