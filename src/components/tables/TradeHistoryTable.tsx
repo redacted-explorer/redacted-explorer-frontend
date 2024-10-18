@@ -106,17 +106,15 @@ export default function TradeHistoryTable({
   }, [websocketInitialized]);
 
   return (
-    <div>
-      <div className="mt-4 flex flex-col justify-center h-[600px]">
-        <TimeProvider>
-          <TableInfiniteScroll
-            hasMore={hasMore}
-            isLoading={isLoading}
-            list={list}
-            columns={columns}
-          />
-        </TimeProvider>
-      </div>
+    <div className="mt-4 flex flex-col justify-center h-[600px]">
+      <TimeProvider>
+        <TableInfiniteScroll
+          hasMore={hasMore}
+          isLoading={isLoading}
+          list={list}
+          columns={columns}
+        />
+      </TimeProvider>
     </div>
   );
 }

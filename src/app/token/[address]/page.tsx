@@ -1,4 +1,3 @@
-import TradeHistoryInfiniteTable from "@/components/tables/TradeHistoryInfiniteTable";
 import TradeHistoryTable from "@/components/tables/TradeHistoryTable";
 import { TradingViewChart } from "@/components/ui/TradingViewChart";
 

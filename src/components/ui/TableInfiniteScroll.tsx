@@ -52,7 +52,7 @@ export default function TableInfiniteScroll({
         ) : null
       }
       classNames={{
-        base: "overflow-scroll",
+        base: "overflow-hidden",
         table: "min-h-[400px]",
       }}
     >
