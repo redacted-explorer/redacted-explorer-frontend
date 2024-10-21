@@ -75,7 +75,6 @@ export default function TransferTable({ accountId }: { accountId: string }) {
       fetch(url, { method: "GET" })
         .then((response) => response.json())
         .then((data) => {
-          console.log(url);
           const transfers: Transfer[] = data.map((date: any) => {
             const { id } = date;
             const {
@@ -103,7 +102,6 @@ export default function TransferTable({ accountId }: { accountId: string }) {
           const tableRowsTemp = transfers.map((transfer) => {
             const tokenMetadata = allTokensMetadata[transfer.tokenId].metadata;
             const currentPrice = allTokensMetadata[transfer.tokenId].price_usd;
-            console.log(currentPrice);
             const { id, sender, receiver } = transfer;
             const time = timestampToTimeDifference(transfer.timestamp);
             let amount = transfer.amount;

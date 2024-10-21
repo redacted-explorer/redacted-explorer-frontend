@@ -36,9 +36,9 @@ export default function TablePaginated({
   firstPage: boolean;
   lastPage: boolean;
   entriesPerPageList: number[];
-  updateEntriesPerPage: (n: number) => {};
-  nextPage: () => {};
-  previousPage: () => {};
+  updateEntriesPerPage: (n: number) => void;
+  nextPage: () => void;
+  previousPage: () => void;
 }) {
   return (
     <div>
