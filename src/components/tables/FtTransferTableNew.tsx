@@ -20,21 +20,14 @@ type Row = {
   price: string;
   txn: React.ReactNode;
 };
-type Transfer = {
-  id: number;
-  timestamp: number;
-  sender: string;
-  receiver: string;
-  amount: string;
-  tokenId: string;
-  txn: string;
-};
+
 export default function FtTransferTableNew({
   accountId,
 }: {
   accountId: string;
 }) {
   const columns = [
+    { key: "id", label: "ID" },
     { key: "time", label: "TIME" },
     { key: "transfer", label: "TRANSFER" },
     { key: "sender", label: "FROM" },
@@ -165,7 +158,6 @@ export default function FtTransferTableNew({
       setLastPage(true);
       if (entries.length === 0) return;
     }
-    console.log(entries);
     setFirstId(entries[0].id);
     setLastId(entries[entries.length - 1].id);
     setIndexFirstEntry((prev) => prev + entriesPerPage);
