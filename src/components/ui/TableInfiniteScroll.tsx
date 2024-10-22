@@ -57,7 +57,14 @@ export default function TableInfiniteScroll({
       }}
     >
       <TableHeader columns={columns}>
-        {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
+        {(column) => (
+          <TableColumn
+            className={column.key === "type" ? "w-50" : ""}
+            key={column.key}
+          >
+            {column.label}
+          </TableColumn>
+        )}
       </TableHeader>
       <TableBody
         isLoading={isLoading}

@@ -1,75 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import TablePaginated from "../ui/TablePaginated";
 import {
-  convertIntToFloat,
-  formatNumber,
-  ftTransferEventToRow,
-  timestampToTimeDifference,
-} from "../../../utils";
-import { FaExternalLinkAlt } from "react-icons/fa";
-import { TokenData, TokenMetadata, TokenTransferData } from "../../../types";
-const entriesPerPageList = [10, 25, 50];
-import { TokenTransferTableRow } from "../../../types";
+  TokenData,
+  TransactionData,
+  TransactionTableRow,
+} from "../../../types";
+import { transactionDataToRow } from "../../../utils";
+import TablePaginated from "../ui/TablePaginated";
 
-export default function FtTransferTableNew({
+export default function TransactionsTable({
   accountId,
 }: {
   accountId: string;
 }) {
-  const columns = [
-    { key: "id", label: "ID" },
-    { key: "time", label: "TIME" },
-    { key: "transfer", label: "TRANSFER" },
-    { key: "sender", label: "FROM" },
-    { key: "receiver", label: "TO" },
-    { key: "price", label: "PRICE" },
-    { key: "txn", label: "TXN" },
-  ];
-
+  const entriesPerPageList = [10, 25, 50];
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [indexFirstEntry, setIndexFirstEntry] = useState(0);
   const [firstId, setFirstId] = useState<number | null>(null);
   const [lastId, setLastId] = useState<number | null>(null);
   const [firstPage, setFirstPage] = useState(true);
   const [lastPage, setLastPage] = useState(false);
-  const [tableRows, setTableRows] = useState<TokenTransferTableRow[] | null>(
+  const [tableRows, setTableRows] = useState<TransactionTableRow[] | null>(
     null
   );
   const [initialized, setInitialized] = useState(false);
   const [metadataInitialized, setMetadataInitialized] = useState(false);
   const [allTokensMetadata, setAllTokensMetadata] = useState<any>(null);
-
-  async function fetchTransfers(
-    url: string,
-    sort: boolean = false
-  ): Promise<TokenTransferTableRow[]> {
-    if (!allTokensMetadata) return [];
-    try {
-      const res = await fetch(url, { method: "GET" });
-      const data = await res.json();
-      const tableRowsTemp: TokenTransferTableRow[] = data.map(
-        (date: TokenTransferData) => {
-          const tokenData: TokenData = allTokensMetadata[date.event.token_id];
-          if (tokenData) {
-            return ftTransferEventToRow(date, tokenData);
-          }
-          return ftTransferEventToRow(date);
-        }
-      );
-      if (sort) {
-        tableRowsTemp.reverse();
-      }
-      return tableRowsTemp;
-    } catch (e) {
-      return [];
-    }
-  }
-
-  if (tableRows) {
-    console.log(firstId, tableRows[0]);
-  }
+  const columns = [
+    { key: "transactionId", label: "TX HASH" },
+    { key: "time", label: "TIME" },
+    { key: "receiver", label: "RECEIVER" },
+    { key: "blockHeight", label: "HEIGHT" },
+  ];
 
   useEffect(() => {
     if (initialized || !metadataInitialized) return;
@@ -90,8 +53,31 @@ export default function FtTransferTableNew({
     }
   });
 
+  async function fetchTransactions(
+    url: string,
+    sort: boolean = false
+  ): Promise<TransactionTableRow[]> {
+    if (!allTokensMetadata) return [];
+    try {
+      const res = await fetch(url, { method: "GET" });
+      const data = await res.json();
+      const tableRowsTemp: TransactionTableRow[] = data.map(
+        (date: TransactionData) => {
+          const row: TransactionTableRow = transactionDataToRow(date);
+          return row;
+        }
+      );
+      if (sort) {
+        tableRowsTemp.reverse();
+      }
+      return tableRowsTemp;
+    } catch (e) {
+      return [];
+    }
+  }
+
   async function initializeTable() {
-    const entries = await fetchTransfers(
+    const entries = await fetchTransactions(
       `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=Newest&limit=${entriesPerPage}`
     );
     if (entries.length === 0) {
@@ -107,7 +93,7 @@ export default function FtTransferTableNew({
   async function updateEntriesPerPage(n: number) {
     setEntriesPerPage(n);
     if (!tableRows || tableRows.length === 0) return;
-    const entries = await fetchTransfers(
+    const entries = await fetchTransactions(
       `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=BeforeId&id=${
         firstId! + 1
       }&limit=${n}`
@@ -118,7 +104,7 @@ export default function FtTransferTableNew({
   }
 
   async function nextPage() {
-    const entries = await fetchTransfers(
+    const entries = await fetchTransactions(
       `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=BeforeId&id=${lastId}&limit=${entriesPerPage}`
     );
     if (entries.length < entriesPerPage) {
@@ -143,7 +129,7 @@ export default function FtTransferTableNew({
     } else {
       setIndexFirstEntry((prev) => prev - entriesPerPage);
     }
-    const entries = await fetchTransfers(
+    const entries = await fetchTransactions(
       `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=AfterId&id=${id}&limit=${entriesPerPage}`,
       true
     );

@@ -1,28 +1,21 @@
 import { TimeAgo } from "@/components/ui/TimeAgo";
 import { FaExternalLinkAlt } from "react-icons/fa";
+import {
+  TokenData,
+  TokenMetadata,
+  TokenTransferData,
+  TokenTransferTableRow,
+  TradeTableRow,
+  TransactionData,
+  TransactionTableRow,
+} from "./types";
 
-export type TradeTableRow = {
-  id?: number;
-  key: string;
-  time: React.ReactNode;
-  timestamp: number;
-  type: string;
-  fromAmount: string;
-  swappedFor: string;
-  price: string;
-  maker: string;
-  txn: React.ReactNode;
-};
-
-export type TokenMetadata = {
-  name: string;
-  symbol: string;
-  decimals: number;
-};
-
-export function timestampToTimeDifference(timestampNanosec: number, currentTime?: Date): string {
+export function timestampToTimeDifference(
+  timestampNanosec: string | number,
+  currentTime?: Date
+): string {
   /* timestamp is in nanoseconds, Date().getTime() in milliseconds */
-  timestampNanosec = timestampNanosec / 1000000;
+  timestampNanosec = Number(timestampNanosec) / 1000000;
   const now = currentTime ? currentTime.getTime() : new Date().getTime();
   let difference = Math.abs(now - timestampNanosec);
   const days = Math.floor(difference / (1000 * 60 * 60 * 24));
@@ -109,11 +102,70 @@ export function formatNumber(number: number) {
   return outputNumber.toLocaleString("en-US");
 }
 
+export function transactionDataToRow(
+  date: TransactionData
+): TransactionTableRow {
+  const id = date.id;
+  const transactionId = date.event.transaction_id;
+  const blockHeight = date.event.block_height;
+  const time = timestampToTimeDifference(date.event.block_timestamp_nanosec);
+  const receiver = date.event.new_owner_id;
+  console.log(date);
+  const row: TransactionTableRow = {
+    id,
+    transactionId,
+    blockHeight,
+    time,
+    receiver,
+  };
+  return row;
+}
+
+export function ftTransferEventToRow(
+  date: TokenTransferData,
+  tokenData?: TokenData
+) {
+  const { id } = date;
+  const sender = date.event.old_owner_id;
+  const receiver = date.event.new_owner_id;
+  const time = timestampToTimeDifference(date.event.block_timestamp_nanosec);
+  let amount = date.event.amount.toString();
+  let tokenId = date.event.token_id;
+  let price = "unknown";
+  if (tokenData) {
+    const currentPrice = tokenData.price_usd;
+    amount = convertIntToFloat(amount, tokenData.metadata.decimals);
+    tokenId = tokenData.metadata.symbol;
+    price = formatNumber(Number(amount) * Number(currentPrice));
+  }
+  const txn = (
+    <div>
+      <a
+        href={`https://nearblocks.io/txns/${date.event.transaction_id}`}
+        target="_blank"
+      >
+        <FaExternalLinkAlt />
+      </a>
+    </div>
+  );
+  const row: TokenTransferTableRow = {
+    id,
+    time,
+    transfer: `${amount} ${tokenId}`,
+    sender,
+    receiver,
+    amount,
+    price,
+    txn,
+  };
+  return row;
+}
+
 export function tradeEventToRow(
   event: any,
   tokenAddress: string,
   allTokensMetadata: any,
-  id?: number,
+  id?: number
 ): TradeTableRow {
   console.log("in trade event to row");
   console.log(event);
@@ -130,7 +182,9 @@ export function tradeEventToRow(
   const time = <TimeAgo timestampNanosec={block_timestamp_nanosec} />;
   const timestamp = block_timestamp_nanosec;
   const type = balance_changes[tokenAddress]
-    ? (balance_changes[tokenAddress] < 0 ? "sell" : "buy")
+    ? balance_changes[tokenAddress] < 0
+      ? "sell"
+      : "buy"
     : "Arbitrage";
 
   /* get rid of the '-' in front of the swapped token */

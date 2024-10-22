@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { tradeEventToRow, TradeTableRow } from "../../../utils";
+import { TradeTableRow } from "../../../types";
+import { tradeEventToRow } from "../../../utils";
 import useWebSocket from "react-use-websocket";
 import { useAsyncList } from "@react-stately/data";
 import { useInfiniteScroll } from "@nextui-org/use-infinite-scroll";
