@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import TablePaginated from "../ui/TablePaginated";
 import { ftTransferEventToRow } from "../../../utils";
-import { TokenData, TokenMetadata, TokenTransferData } from "../../../types";
+import { TokenData, TokenTransferData } from "../../../types";
 import { TokenTransferTableRow } from "../../../types";
 
 export default function FtTransferTableNew({
