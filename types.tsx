@@ -17,10 +17,10 @@ export type TransactionData = {
 
 export type TransactionTableRow = {
   id: number;
-  transactionId: string;
+  transactionId: React.ReactNode;
   blockHeight: number;
   time: React.ReactNode;
-  receiver: string;
+  receiver: React.ReactNode;
 };
 
 export type TokenTransferData = {
@@ -58,7 +58,7 @@ export type TradeTableRow = {
   fromAmount: string;
   swappedFor: string;
   price: string;
-  maker: string;
+  maker: React.ReactNode;
   txn: React.ReactNode;
 };
 

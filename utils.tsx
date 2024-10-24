@@ -10,6 +10,8 @@ import {
   TransactionTableRow,
 } from "./types";
 import Link from "next/link";
+import TableElementAccountAddress from "@/components/tables/ui-tables/TableElementAccountAddress";
+import TableElementTransactionHash from "@/components/tables/ui-tables/TableElementTransactionHash";
 
 export function timestampToTimeDifference(
   timestampNanosec: string | number,
@@ -107,10 +109,14 @@ export function transactionDataToRow(
   date: TransactionData
 ): TransactionTableRow {
   const id = date.id;
-  const transactionId = date.event.transaction_id;
+  const transactionId = (
+    <TableElementTransactionHash transactionHash={date.event.transaction_id} />
+  );
   const blockHeight = date.event.block_height;
   const time = timestampToTimeDifference(date.event.block_timestamp_nanosec);
-  const receiver = date.event.new_owner_id;
+  const receiver = (
+    <TableElementAccountAddress accountId={date.event.new_owner_id} />
+  );
   console.log(date);
   const row: TransactionTableRow = {
     id,
@@ -128,14 +134,10 @@ export function ftTransferEventToRow(
 ) {
   const { id } = date;
   const sender = (
-    <Link href={`/account/${date.event.old_owner_id}`}>
-      {date.event.old_owner_id}
-    </Link>
+    <TableElementAccountAddress accountId={date.event.old_owner_id} />
   );
   const receiver = (
-    <Link href={`/account/${date.event.new_owner_id}`}>
-      {date.event.new_owner_id}
-    </Link>
+    <TableElementAccountAddress accountId={date.event.new_owner_id} />
   );
   const time = timestampToTimeDifference(date.event.block_timestamp_nanosec);
   let amount = date.event.amount.toString();
@@ -238,7 +240,7 @@ export function tradeEventToRow(
     fromAmount,
     swappedFor,
     price: "coming soon",
-    maker: truncateString(trader, 20),
+    maker: <TableElementAccountAddress accountId={trader} />,
     txn: txnLink,
   };
   console.log("Returning the following row", row);
