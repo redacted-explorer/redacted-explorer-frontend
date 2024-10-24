@@ -42,8 +42,8 @@ export type TokenTransferTableRow = {
   id: number;
   time: string;
   transfer: string;
-  sender: string;
-  receiver: string;
+  sender: React.ReactNode;
+  receiver: React.ReactNode;
   amount: string;
   price: string;
   txn: React.ReactNode;

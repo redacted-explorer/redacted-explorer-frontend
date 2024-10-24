@@ -9,6 +9,7 @@ import {
   TransactionData,
   TransactionTableRow,
 } from "./types";
+import Link from "next/link";
 
 export function timestampToTimeDifference(
   timestampNanosec: string | number,
@@ -126,8 +127,16 @@ export function ftTransferEventToRow(
   tokenData?: TokenData
 ) {
   const { id } = date;
-  const sender = date.event.old_owner_id;
-  const receiver = date.event.new_owner_id;
+  const sender = (
+    <Link href={`/account/${date.event.old_owner_id}`}>
+      {date.event.old_owner_id}
+    </Link>
+  );
+  const receiver = (
+    <Link href={`/account/${date.event.new_owner_id}`}>
+      {date.event.new_owner_id}
+    </Link>
+  );
   const time = timestampToTimeDifference(date.event.block_timestamp_nanosec);
   let amount = date.event.amount.toString();
   let tokenId = date.event.token_id;
@@ -140,12 +149,12 @@ export function ftTransferEventToRow(
   }
   const txn = (
     <div>
-      <a
+      <Link
         href={`https://nearblocks.io/txns/${date.event.transaction_id}`}
         target="_blank"
       >
         <FaExternalLinkAlt />
-      </a>
+      </Link>
     </div>
   );
   const row: TokenTransferTableRow = {
