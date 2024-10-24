@@ -2,6 +2,7 @@
 
 import FtTransferTableNew from "@/components/tables/FtTransferTableNew";
 import TradeHistoryTable from "@/components/tables/TradeHistoryTable";
+import TokenOverview from "@/components/tokens/TokenOverview";
 import Pill from "@/components/ui/Pill";
 import { TradingViewChart } from "@/components/ui/TradingViewChart";
 import { useState } from "react";
@@ -13,6 +14,7 @@ export default function Page({ params }: { params: { address: string } }) {
   return (
     <div className="flex justify-center items-center ">
       <div className="flex flex-col justify-center items-stretch w-[80%]">
+        <TokenOverview tokenAddress={params.address} />
         <div className="flex justify-center">
           <TradingViewChart symbol={params.address} />
         </div>
