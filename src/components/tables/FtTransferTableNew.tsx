@@ -7,8 +7,10 @@ import { TokenTransferTableRow } from "../../../types";
 
 export default function FtTransferTableNew({
   accountId,
+  contractId,
 }: {
-  accountId: string;
+  accountId?: string;
+  contractId?: string;
 }) {
   const entriesPerPageList = [10, 25, 50];
   const columns = [
@@ -20,6 +22,9 @@ export default function FtTransferTableNew({
     { key: "price", label: "PRICE" },
     { key: "txn", label: "TXN" },
   ];
+  const filter = `${accountId ? `involved_account_ids=${accountId}&` : ""}${
+    contractId ? `token_id=${contractId}&` : ""
+  }`;
 
   async function fetchTransfers(
     url: string,
@@ -49,24 +54,24 @@ export default function FtTransferTableNew({
   }
 
   function getInitializeTableUrl(entriesPerPage: number): string {
-    return `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=Newest&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/ft_transfer?${filter}pagination_by=Newest&limit=${entriesPerPage}`;
   }
 
   function getUpdateEntriesPerPageUrl(
     id: number,
     entriesPerPage: number
   ): string {
-    return `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=BeforeId&id=${
+    return `https://events.intear.tech/query/ft_transfer?${filter}pagination_by=BeforeId&id=${
       id + 1
     }&limit=${entriesPerPage}`;
   }
 
   function getNextPageUrl(id: number, entriesPerPage: number): string {
-    return `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=BeforeId&id=${id}&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/ft_transfer?${filter}pagination_by=BeforeId&id=${id}&limit=${entriesPerPage}`;
   }
 
   function getPreviousPageUrl(id: number, entriesPerPage: number): string {
-    return `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=AfterId&id=${id}&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/ft_transfer?${filter}pagination_by=AfterId&id=${id}&limit=${entriesPerPage}`;
   }
 
   return (
