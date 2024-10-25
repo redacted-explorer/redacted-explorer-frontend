@@ -1,3 +1,7 @@
+import { TimeAgo } from "@/components/ui/TimeAgo";
+import { TradeTableRow } from "./types";
+import { convertIntToFloat, formatNumber, truncateString } from "./utils";
+import { FaExternalLinkAlt } from "react-icons/fa";
 
 export function tradeEventToRow(
   event: any,
