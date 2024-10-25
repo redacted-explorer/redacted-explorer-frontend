@@ -152,7 +152,7 @@ export function ftTransferEventToRow(
   const txn = (
     <div>
       <Link
-        href={`https://nearblocks.io/txns/${date.event.transaction_id}`}
+        href={`https://nearvalidate.org/txns/${date.event.transaction_id}`}
         target="_blank"
       >
         <FaExternalLinkAlt />
@@ -226,7 +226,7 @@ export function tradeEventToRow(
 
   const txnLink = (
     <div>
-      <a href={`https://nearblocks.io/txns/${transaction_id}`} target="_blank">
+      <a href={`https://nearvalidate.org/txns/${transaction_id}`} target="_blank">
         <FaExternalLinkAlt />
       </a>
     </div>

@@ -57,7 +57,7 @@ export function tradeEventToRow(
 
   const txnLink = (
     <div>
-      <a href={`https://nearblocks.io/txns/${transaction_id}`} target="_blank">
+      <a href={`https://nearvalidate.org/txns/${transaction_id}`} target="_blank">
         <FaExternalLinkAlt />
       </a>
     </div>
