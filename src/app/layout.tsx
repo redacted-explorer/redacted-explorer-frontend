@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/header/Header";
 import Footer from "@/components/Footer";
+import { TimeProvider } from "@/components/ui/TimeAgo";
 
 export const metadata: Metadata = {
   title: "[Redacted] Explorer",
@@ -15,11 +16,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="flex flex-col min-h-screen dark text-foreground bg-background">
-        <Header />
-          {children}
-        <Footer />
-      </body>
+      <TimeProvider>
+        <body className="flex flex-col min-h-screen dark text-foreground bg-background">
+          <Header />
+            {children}
+          <Footer />
+        </body>
+      </TimeProvider>
     </html>
   );
 }
