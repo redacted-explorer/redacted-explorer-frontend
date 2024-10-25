@@ -10,37 +10,54 @@ import { transactionDataToRow } from "../../../utils";
 import TablePaginated from "../ui/TablePaginated";
 
 export default function TransactionsTable({
-  accountId,
+  signerId,
+  receiverId,
 }: {
-  accountId: string;
+  signerId?: string;
+  receiverId?: string;
 }) {
   const entriesPerPageList = [10, 25, 50];
   const columns = [
-    { key: "transactionId", label: "TX HASH" },
     { key: "time", label: "TIME" },
-    { key: "receiver", label: "RECEIVER" },
-    { key: "blockHeight", label: "HEIGHT" },
+    { key: "blockHeight", label: "BLOCK" },
   ];
+  if (receiverId === undefined) {
+    columns.push({ key: "receiver", label: "INTERACTION WITH" });
+  }
+  if (signerId === undefined) {
+    columns.push({ key: "signer", label: "SENDER" });
+  }
+  columns.push({ key: "transactionId", label: "TX HASH" })
+
+  function createFilters({ signerId, receiverId }: { signerId?: string; receiverId?: string }) {
+    const urlParams = new URLSearchParams();
+    if (signerId) {
+      urlParams.append("signer_id", signerId);
+    }
+    if (receiverId) {
+      urlParams.append("receiver_id", receiverId);
+    }
+    return urlParams.toString();
+  }
 
   function getInitializeTableUrl(entriesPerPage: number): string {
-    return `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=Newest&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/tx_transaction?${createFilters({ signerId, receiverId })}&pagination_by=Newest&limit=${entriesPerPage}`;
   }
 
   function getUpdateEntriesPerPageUrl(
     id: number,
     entriesPerPage: number
   ): string {
-    return `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=BeforeId&id=${
-      id + 1
-    }&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/tx_transaction?${createFilters({ signerId, receiverId })}&pagination_by=BeforeId&id=${id + 1
+      }&limit=${entriesPerPage}`;
   }
 
   function getNextPageUrl(id: number, entriesPerPage: number): string {
-    return `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=BeforeId&id=${id}&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/tx_transaction?${createFilters({ signerId, receiverId })}&pagination_by=BeforeId&id=${id}&limit=${entriesPerPage}`;
   }
 
   function getPreviousPageUrl(id: number, entriesPerPage: number): string {
-    return `https://events.intear.tech/query/ft_transfer?involved_account_ids=${accountId}&pagination_by=AfterId&id=${id}&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/tx_transaction?${createFilters({ signerId, receiverId })}&pagination_by=AfterId&id=${id}&limit=${entriesPerPage}`;
   }
 
   async function fetchTransactions(

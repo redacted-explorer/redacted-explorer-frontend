@@ -17,6 +17,7 @@ export default function TradeHistoryTable({
 }) {
   const columns = [
     { key: "time", label: "TIME" },
+    { key: "blockHeight", label: "BLOCK" },
     { key: "type", label: "TYPE" },
     { key: "fromAmount", label: "AMOUNT" },
     { key: "swappedFor", label: "SWAPPED" },

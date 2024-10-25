@@ -65,8 +65,8 @@ export function tradeEventToRow(
   const row: TradeTableRow = {
     id,
     key: event.transaction_id,
+    blockHeight: event.block_height,
     time,
-    timestamp,
     type,
     fromAmount,
     swappedFor,
