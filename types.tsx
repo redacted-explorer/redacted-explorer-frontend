@@ -62,6 +62,12 @@ export type TradeTableRow = {
   txn: React.ReactNode;
 };
 
+export type PriceData = {
+  price_usd: string;
+  timestamp_nanosec: string;
+  token: string;
+};
+
 export type TokenData = {
   account_id: string;
   circulating_supply: string;
