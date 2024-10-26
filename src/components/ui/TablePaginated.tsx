@@ -46,7 +46,7 @@ export default function TablePaginated({
 }) {
   const [indexFirstEntry, setIndexFirstEntry] = useState(0);
   const [firstPage, setFirstPage] = useState(true);
-  const [lastPage, setLastPage] = useState(false);
+  const [lastPage, setLastPage] = useState(true);
   const [entriesPerPage, setEntriesPerPage] = useState(entriesPerPageList[0]);
   const [tableRows, setTableRows] = useState<Row[] | null>(null);
   const [initialized, setInitialized] = useState(false);
@@ -92,6 +92,7 @@ export default function TablePaginated({
       console.log("Transaction array is empty");
       return;
     }
+    setLastPage(entries.length < entriesPerPage);
     setTableRows(entries);
     setInitialized(true);
   }
@@ -167,7 +168,7 @@ export default function TablePaginated({
             </Table>
           </div>
 
-          <div className="flex flex-col gap-2 ml-4 my-2">
+          <div className="flex flex-col gap-2 my-4">
             <div className="flex gap-2">
               <Button isDisabled={firstPage} onClick={previousPage}>
                 Previous

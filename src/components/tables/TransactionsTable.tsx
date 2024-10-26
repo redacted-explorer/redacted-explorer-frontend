@@ -1,6 +1,3 @@
-"use client";
-
-import { SetStateAction, useEffect, useState } from "react";
 import {
   TokenData,
   TransactionData,
@@ -27,9 +24,15 @@ export default function TransactionsTable({
   if (signerId === undefined) {
     columns.push({ key: "signer", label: "SENDER" });
   }
-  columns.push({ key: "transactionId", label: "TX HASH" })
+  columns.push({ key: "transactionId", label: "TX HASH" });
 
-  function createFilters({ signerId, receiverId }: { signerId?: string; receiverId?: string }) {
+  function createFilters({
+    signerId,
+    receiverId,
+  }: {
+    signerId?: string;
+    receiverId?: string;
+  }) {
     const urlParams = new URLSearchParams();
     if (signerId) {
       urlParams.append("signer_id", signerId);
@@ -41,23 +44,34 @@ export default function TransactionsTable({
   }
 
   function getInitializeTableUrl(entriesPerPage: number): string {
-    return `https://events.intear.tech/query/tx_transaction?${createFilters({ signerId, receiverId })}&pagination_by=Newest&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/tx_transaction?${createFilters({
+      signerId,
+      receiverId,
+    })}&pagination_by=Newest&limit=${entriesPerPage}`;
   }
 
   function getUpdateEntriesPerPageUrl(
     id: number,
     entriesPerPage: number
   ): string {
-    return `https://events.intear.tech/query/tx_transaction?${createFilters({ signerId, receiverId })}&pagination_by=BeforeId&id=${id + 1
-      }&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/tx_transaction?${createFilters({
+      signerId,
+      receiverId,
+    })}&pagination_by=BeforeId&id=${id + 1}&limit=${entriesPerPage}`;
   }
 
   function getNextPageUrl(id: number, entriesPerPage: number): string {
-    return `https://events.intear.tech/query/tx_transaction?${createFilters({ signerId, receiverId })}&pagination_by=BeforeId&id=${id}&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/tx_transaction?${createFilters({
+      signerId,
+      receiverId,
+    })}&pagination_by=BeforeId&id=${id}&limit=${entriesPerPage}`;
   }
 
   function getPreviousPageUrl(id: number, entriesPerPage: number): string {
-    return `https://events.intear.tech/query/tx_transaction?${createFilters({ signerId, receiverId })}&pagination_by=AfterId&id=${id}&limit=${entriesPerPage}`;
+    return `https://events.intear.tech/query/tx_transaction?${createFilters({
+      signerId,
+      receiverId,
+    })}&pagination_by=AfterId&id=${id}&limit=${entriesPerPage}`;
   }
 
   async function fetchTransactions(

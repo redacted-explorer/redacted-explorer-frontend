@@ -9,6 +9,7 @@ import HeaderMenu from "./HeaderMenu";
 import HeaderMenuItem from "./HeaderMenuItem";
 import HeaderMenuDropdown from "./HeaderMenuDropdown";
 import { IoSunnyOutline } from "react-icons/io5";
+import SearchField from "../SearchField";
 
 export default function Header() {
   const [hidden, setHidden] = useState(true);
@@ -23,6 +24,7 @@ export default function Header() {
         <div>
           <ExplorerLogo size={"35px"} />
         </div>
+        <SearchField />
         <div className="flex space-x-4">
           <button
             className="flex items-center justify-center"
