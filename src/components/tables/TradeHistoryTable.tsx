@@ -17,6 +17,7 @@ export default function TradeHistoryTable({
 }) {
   const columns = [
     { key: "time", label: "TIME" },
+    { key: "blockHeight", label: "BLOCK" },
     { key: "type", label: "TYPE" },
     { key: "fromAmount", label: "AMOUNT" },
     { key: "swappedFor", label: "SWAPPED" },
@@ -64,9 +65,8 @@ export default function TradeHistoryTable({
 
       return {
         items: tableRowsTemp,
-        cursor: `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeId&id=${
-          tableRowsTemp[tableRowsTemp.length - 1].id
-        }&limit=${ENTRIES_PER_REQUEST}`,
+        cursor: `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeId&id=${tableRowsTemp[tableRowsTemp.length - 1].id
+          }&limit=${ENTRIES_PER_REQUEST}`,
       };
     },
   });
@@ -108,14 +108,12 @@ export default function TradeHistoryTable({
 
   return (
     <div className="mt-4 flex flex-col justify-center h-[600px]">
-      <TimeProvider>
-        <TableInfiniteScroll
-          hasMore={hasMore}
-          isLoading={isLoading}
-          list={list}
-          columns={columns}
-        />
-      </TimeProvider>
+      <TableInfiniteScroll
+        hasMore={hasMore}
+        isLoading={isLoading}
+        list={list}
+        columns={columns}
+      />
     </div>
   );
 }

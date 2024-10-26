@@ -14,8 +14,8 @@ export default function FtTransferTableNew({
 }) {
   const entriesPerPageList = [10, 25, 50];
   const columns = [
-    { key: "id", label: "ID" },
     { key: "time", label: "TIME" },
+    { key: "blockHeight", label: "BLOCK" },
     { key: "transfer", label: "TRANSFER" },
     { key: "sender", label: "FROM" },
     { key: "receiver", label: "TO" },

@@ -257,7 +257,7 @@ export const TradingViewChart = ({ symbol }: { symbol: string }) => {
     const widgetOptions: ChartingLibraryWidgetOptions = {
       datafeed,
       library_path: "https://dynamic-moxie-09a484.netlify.app/",
-      fullscreen: false,
+      fullscreen: true,
       symbol,
       interval: "5" as ResolutionString, // TODO save selected
       container: chartContainerRef.current,

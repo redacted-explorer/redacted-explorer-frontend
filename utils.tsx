@@ -106,42 +106,47 @@ export function formatNumber(number: number) {
 }
 
 export function transactionDataToRow(
-  date: TransactionData
+  data: TransactionData
 ): TransactionTableRow {
-  const id = date.id;
+  const id = data.id;
   const transactionId = (
-    <TableElementTransactionHash transactionHash={date.event.transaction_id} />
+    <TableElementTransactionHash transactionHash={data.event.transaction_id} />
   );
-  const blockHeight = date.event.block_height;
-  const time = timestampToTimeDifference(date.event.block_timestamp_nanosec);
+  const blockHeight = data.event.block_height;
+  const time = <TimeAgo timestampNanosec={data.event.block_timestamp_nanosec}></TimeAgo>
   const receiver = (
-    <TableElementAccountAddress accountId={date.event.new_owner_id} />
+    <TableElementAccountAddress accountId={data.event.receiver_id} />
   );
-  console.log(date);
+  const signer = (
+    <TableElementAccountAddress accountId={data.event.signer_id} />
+  );
+  console.log(data);
   const row: TransactionTableRow = {
     id,
     transactionId,
     blockHeight,
     time,
+    signer,
     receiver,
   };
   return row;
 }
 
 export function ftTransferEventToRow(
-  date: TokenTransferData,
+  data: TokenTransferData,
   tokenData?: TokenData
 ) {
-  const { id } = date;
+  const { id } = data;
   const sender = (
-    <TableElementAccountAddress accountId={date.event.old_owner_id} />
+    <TableElementAccountAddress accountId={data.event.old_owner_id} />
   );
   const receiver = (
-    <TableElementAccountAddress accountId={date.event.new_owner_id} />
+    <TableElementAccountAddress accountId={data.event.new_owner_id} />
   );
-  const time = timestampToTimeDifference(date.event.block_timestamp_nanosec);
-  let amount = date.event.amount.toString();
-  let tokenId = date.event.token_id;
+  const time = <TimeAgo timestampNanosec={data.event.block_timestamp_nanosec}></TimeAgo>
+  const blockHeight = data.event.block_height;
+  let amount = data.event.amount.toString();
+  let tokenId = data.event.token_id;
   let price = "unknown";
   if (tokenData) {
     const currentPrice = tokenData.price_usd;
@@ -149,19 +154,11 @@ export function ftTransferEventToRow(
     tokenId = tokenData.metadata.symbol;
     price = formatNumber(Number(amount) * Number(currentPrice));
   }
-  const txn = (
-    <div>
-      <Link
-        href={`https://nearblocks.io/txns/${date.event.transaction_id}`}
-        target="_blank"
-      >
-        <FaExternalLinkAlt />
-      </Link>
-    </div>
-  );
+  const txn = <TableElementTransactionHash transactionHash={data.event.transaction_id} />;
   const row: TokenTransferTableRow = {
     id,
     time,
+    blockHeight,
     transfer: `${amount} ${tokenId}`,
     sender,
     receiver,
@@ -181,7 +178,7 @@ export function tradeEventToRow(
   console.log("in trade event to row");
   console.log(event);
 
-  const { block_timestamp_nanosec, balance_changes, trader, transaction_id } =
+  const { block_timestamp_nanosec, balance_changes, trader, transaction_id, block_height } =
     event;
   const otherTokenAddress =
     Object.keys(balance_changes)[0] === tokenAddress
@@ -191,7 +188,6 @@ export function tradeEventToRow(
   const otherTokenMetadata = allTokensMetadata[otherTokenAddress];
 
   const time = <TimeAgo timestampNanosec={block_timestamp_nanosec} />;
-  const timestamp = block_timestamp_nanosec;
   const type = balance_changes[tokenAddress]
     ? balance_changes[tokenAddress] < 0
       ? "sell"
@@ -226,7 +222,7 @@ export function tradeEventToRow(
 
   const txnLink = (
     <div>
-      <a href={`https://nearblocks.io/txns/${transaction_id}`} target="_blank">
+      <a href={`https://nearvalidate.org/txns/${transaction_id}`} target="_blank">
         <FaExternalLinkAlt />
       </a>
     </div>
@@ -234,8 +230,8 @@ export function tradeEventToRow(
   const row: TradeTableRow = {
     id,
     key: event.transaction_id,
+    blockHeight: block_height,
     time,
-    timestamp,
     type,
     fromAmount,
     swappedFor,

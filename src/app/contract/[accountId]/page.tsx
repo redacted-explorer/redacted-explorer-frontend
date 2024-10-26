@@ -4,7 +4,7 @@ import TransactionsTable from "@/components/tables/TransactionsTable";
 import Pill from "@/components/ui/Pill";
 import { useState } from "react";
 
-const tabs = ["Transactions", "Token Txns"];
+const tabs = ["Interactions", "Token Txns"];
 
 export default function Page({ params }: { params: { accountId: string } }) {
   const [activeTab, setActiveTab] = useState(tabs[0]);
@@ -24,8 +24,8 @@ export default function Page({ params }: { params: { accountId: string } }) {
             </Pill>
           ))}
         </div>
-        {activeTab === "Transactions" && (
-          <TransactionsTable signerId={params.accountId} />
+        {activeTab === "Interactions" && (
+          <TransactionsTable receiverId={params.accountId} />
         )}
         {activeTab === "Token Txns" && (
           <FtTransferTableNew accountId={params.accountId} />
