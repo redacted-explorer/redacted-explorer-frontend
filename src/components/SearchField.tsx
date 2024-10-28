@@ -1,46 +1,26 @@
-import React, { useMemo, useState } from "react";
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Button,
-  Input,
-} from "@nextui-org/react";
+import React, { useEffect, useRef, useState } from "react";
+import { Button, Input } from "@nextui-org/react";
 
-import { FaAngleDown } from "react-icons/fa";
-
-/*
-ToDo
-- check if entry exists 
-*/
 export default function SearchField() {
-  const [selectedKey, setSelectedKey] = useState("user");
   const [input, setInput] = useState("");
-  const [error, setError] = useState(false);
+  const [focus, setFocus] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
   const [hasResults, setHasResults] = useState({
     account: false,
     tokenContract: false,
     transaction: false,
   });
 
-  function getLink(): string {
-    if (selectedKey === "user") return `/account/${input}`;
-    if (selectedKey === "transaction") return `/transaction/${input}`;
-    if (selectedKey === "token-address") return `/token/${input}`;
-    return "";
-  }
-
   async function checkForAccountName(account: string): Promise<boolean> {
     try {
       return await fetch(`https://api.fastnear.com/v1/account/${account}/full`)
         .then((res) => res.json())
         .then((data) => {
-          if (typeof data !== "string" && data.state !== null) return true;
-          return false;
+          return typeof data !== "string" && data.state !== null;
         });
     } catch (e) {
-      console.log(e);
+      console.log("Account Name Error\n", e);
       return false;
     }
   }
@@ -53,12 +33,10 @@ export default function SearchField() {
       )
         .then((res) => res.json())
         .then((data) => {
-          if (data !== null) {
-            return true;
-          }
-          return false;
+          return data !== null;
         });
     } catch (e) {
+      console.log("Contract Address Error\n", e);
       return false;
     }
   }
@@ -75,72 +53,102 @@ export default function SearchField() {
           return false;
         });
     } catch (e) {
-      console.log(e);
+      console.log("Transaction Error\n", e);
       return false;
     }
   }
 
-  async function handleInput(input: string) {
-    setInput(input);
+  async function handleInput(i: string) {
+    setLoading(true);
+    setInput(i);
     setHasResults({ account: false, tokenContract: false, transaction: false });
-
-    const accountExists = await checkForAccountName(input);
+    const accountExists = await checkForAccountName(i);
     if (accountExists) {
-      const isContract = await checkForContract(input);
+      const isContract = await checkForContract(i);
       console.log("is contract:", isContract);
       setHasResults((prev) => ({
         ...prev,
         account: true,
         tokenContract: isContract,
       }));
-    } else {
-      const isTransaction = await checkForTransaction(input);
+    } else if (i.length === 44) {
+      const isTransaction = await checkForTransaction(i);
       setHasResults((prev) => ({
         ...prev,
         transaction: isTransaction,
       }));
     }
+    setLoading(false);
   }
 
   return (
-    <div className="flex flex-col gap-2 items-center">
+    <div className="flex flex-col gap-2 items-center" ref={ref}>
       <div className="flex gap-2 justify-center items-center">
         <div className="relative">
           <Input
             type="input"
+            radius="sm"
             placeholder="Search"
-            className="h-full border-0 text-white px-2 w-[30rem]"
+            className="h-full text-white px-2 w-[30rem]"
             value={input}
             onInput={(e) => {
               handleInput(e.currentTarget.value);
             }}
+            onFocus={() => setFocus(true)}
+            onBlur={() => setFocus(true)}
           />
-          {(hasResults.account || hasResults.transaction) && (
-            <div className="flex gap-2 flex-col absolute ml-2 p-2 left-0 mt-1 bg-gray-800 text-white rounded-md shadow-lg">
+
+          {focus && (hasResults.account || hasResults.transaction) && (
+            <div className="flex gap-2 flex-col absolute py-3 left-0 mt-1 w-full text-white rounded-md shadow-lg bg-slate-700 z-50">
               {hasResults.account && (
-                <div>
-                  <a href={`/account/${input}`}>Account: {input}</a>
+                <div className="flex flex-col gap-1">
+                  <div className="bg-slate-500 rounded px-3 py-2">Account</div>
+                  <div className="px-3 py-2 rounded hover:bg-slate-500">
+                    <a href={`/account/${input}`}>{input}</a>
+                  </div>
                 </div>
               )}
               {hasResults.tokenContract && (
-                <div>
-                  <a href={`/token/${input}`}>FT Contract: {input}</a>
+                <div className="flex flex-col gap-1">
+                  <div className="bg-slate-500 rounded px-3 py-2">
+                    FT Contract
+                  </div>
+                  <div className="px-3 py-2 rounded hover:bg-slate-500">
+                    <a href={`/token/${input}`}>{input}</a>
+                  </div>
                 </div>
               )}
               {hasResults.transaction && (
-                <div>
-                  <a href={`/transaction/${input}`}>Transaction {input}</a>
+                <div className="flex flex-col gap-1">
+                  <div className="bg-slate-500 rounded px-3 py-2">
+                    Transaction
+                  </div>
+                  <div className="px-3 py-2 rounded hover:bg-slate-500">
+                    <a href={`/transaction/${input}`}>{input}</a>
+                  </div>
                 </div>
               )}
             </div>
           )}
+          {focus &&
+            !loading &&
+            input !== "" &&
+            !(hasResults.account || hasResults.transaction) && (
+              <div className="flex gap-2 flex-col absolute py-3 left-0 mt-1 w-full text-white rounded-md shadow-lg bg-slate-700 z-50">
+                <div className="flex flex-col gap-1">
+                  <div className="bg-slate-500 rounded px-3 py-2">
+                    No Result
+                  </div>
+                </div>
+              </div>
+            )}
+          {loading && (
+            <div className="flex gap-2 flex-col absolute py-3 left-0 mt-1 w-full text-white rounded-md shadow-lg bg-slate-700 z-50">
+              <div className="bg-slate-500 rounded px-3 py-2">Fetching...</div>
+            </div>
+          )}
         </div>
-
-        <a href={getLink()}>
-          <Button onClick={() => setError(true)}>Search</Button>
-        </a>
       </div>
-      {error && <div>Could not find {selectedKey}</div>}
     </div>
   );
 }
