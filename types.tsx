@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 
 export type TransactionData = {
   event: {
@@ -43,7 +43,7 @@ export type TokenTransferTableRow = {
   id: number;
   time: React.ReactNode;
   blockHeight: string;
-  transfer: string;
+  transfer: React.ReactNode;
   sender: React.ReactNode;
   receiver: React.ReactNode;
   amount: string;

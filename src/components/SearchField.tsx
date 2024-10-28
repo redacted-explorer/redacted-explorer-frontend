@@ -71,7 +71,7 @@ export default function SearchField() {
         account: true,
         tokenContract: isContract,
       }));
-    } else if (i.length === 44) {
+    } else {
       const isTransaction = await checkForTransaction(i);
       setHasResults((prev) => ({
         ...prev,
