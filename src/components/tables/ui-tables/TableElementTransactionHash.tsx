@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FaExternalLinkAlt } from "react-icons/fa";
-import { truncateString } from "../../../../utils";
+import { truncateString } from "../../../utils";
 import { Tooltip, Button } from "@nextui-org/react";
 import { useState } from "react";
 import { MdContentCopy } from "react-icons/md";
@@ -23,7 +23,7 @@ export default function TableElementTransactionHash({
     >
       <div className="flex relative">
         <div className="min-w-[10rem] relative flex">
-          <span className="mr-1">{truncateString(transactionHash, 14)}</span>
+          <span className="mr-1">{truncateString(transactionHash, 12)}</span>
           {hover && (
             <MdContentCopy
               className="hover:cursor-pointer"

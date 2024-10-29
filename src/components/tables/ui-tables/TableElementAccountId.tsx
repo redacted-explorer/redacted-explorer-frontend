@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { truncateString } from "../../../../utils";
+import { truncateString } from "../../../utils";
 import { useState } from "react";
 import { MdContentCopy } from "react-icons/md";
 
@@ -19,7 +19,7 @@ export default function TableElementAccountId({
       onMouseLeave={() => setHover(false)}
     >
       <Link href={`/account/${accountId}`} className="hover:text-orange-500">
-        {truncateString(accountId, 15)}
+        {truncateString(accountId, 24)}
       </Link>
       {hover && (
         <MdContentCopy

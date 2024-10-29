@@ -1,14 +1,37 @@
 import { useEffect, useState } from "react";
-import { PriceData, TokenData } from "../../../types";
 import { Button } from "@nextui-org/button";
 
-const addressNear = "wrap.near";
 const FIVE_MINUTES = 1000 * 60 * 5;
 const ONE_HOUR = 1000 * 60 * 60;
 const SIX_HOURS = 1000 * 60 * 60 * 6;
 const ONE_DAY = 1000 * 60 * 60 * 24;
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 const USDT_DECIMALS = 6;
+
+export type PriceData = {
+  price_usd: string;
+  timestamp_nanosec: string;
+  token: string;
+};
+
+export type TokenData = {
+  account_id: string;
+  circulating_supply: string;
+  circulating_supply_excluding_team: string;
+  total_supply: string;
+  deleted: boolean;
+  main_pool: string;
+  price_usd: string;
+  price_usd_raw: string;
+  reputation: string;
+  metadata: TokenMetadata;
+};
+
+export type TokenMetadata = {
+  name: string;
+  symbol: string;
+  decimals: number;
+};
 
 export default function TokenOverview({
   tokenAddress,
