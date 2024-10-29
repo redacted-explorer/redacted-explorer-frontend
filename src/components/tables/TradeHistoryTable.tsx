@@ -1,118 +1,74 @@
-"use client";
-import { useEffect, useState } from "react";
-import { TradeTableRow } from "../../../types";
-import { tradeEventToRow } from "../../../utils";
-import useWebSocket from "react-use-websocket";
-import { useAsyncList } from "@react-stately/data";
-import { useInfiniteScroll } from "@nextui-org/use-infinite-scroll";
-import { TimeProvider } from "../ui/TimeAgo";
-import TableInfiniteScroll from "../ui/TableInfiniteScroll";
+import TablePaginated from "../ui/TablePaginated";
+import TableElementAccountId from "./ui-tables/TableElementAccountId";
+import TableElementTime from "./ui-tables/TableElementTime";
+import TableElementTransactionHash from "./ui-tables/TableElementTransactionHash";
+import TableElementTransferAmount from "./ui-tables/TableElementTransferAmount";
 
-const ENTRIES_PER_REQUEST = 50;
+type TradeEvent = {
+  balance_changes: { [key: string]: `${number}` },
+  block_height: number;
+  block_timestamp_nanosec: number;
+  receipt_id: string;
+  trader: string;
+  transaction_id: string;
+}
 
 export default function TradeHistoryTable({
-  tokenAddress,
+  tokenId,
 }: {
-  tokenAddress: string;
+  tokenId: string;
 }) {
-  const columns = [
-    { key: "time", label: "TIME" },
-    { key: "blockHeight", label: "BLOCK" },
-    { key: "type", label: "TYPE" },
-    { key: "fromAmount", label: "AMOUNT" },
-    { key: "swappedFor", label: "SWAPPED" },
-    { key: "price", label: "PRICE" },
-    { key: "maker", label: "MAKER" },
-    { key: "txn", label: "TXN" },
-  ];
-
-  const WEBSOCKET_URL = "wss://ws-events.intear.tech/events/trade_swap";
-  const INIT_URL = `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=Newest&limit=${ENTRIES_PER_REQUEST}`;
-  const [websocketInitialized, setWebsocketInitialized] = useState(true);
-  const [hasMore, setHasMore] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [allTokensMetadata, setAllTokensMetadata] = useState<any>(null);
-
-  let list = useAsyncList({
-    async load({ signal, cursor }) {
-      if (cursor) {
-        setIsLoading(false);
-      }
-      let res = await fetch(cursor || INIT_URL, {
-        signal,
-      });
-      let json = await res.json();
-      setHasMore(json.length > 0);
-
-      // return if Metadata has not been loaded
-      if (!allTokensMetadata) {
-        return { items: [] };
-      }
-
-      setIsLoading(false);
-      const tableRowsTemp: TradeTableRow[] = json.map(
-        (data: any, i: number) => {
-          const row = tradeEventToRow(
-            data.event,
-            tokenAddress,
-            allTokensMetadata,
-            data.id
-          );
-          return row;
-        }
-      );
-
-      return {
-        items: tableRowsTemp,
-        cursor: `https://events.intear.tech/query/trade_swap?involved_token_account_ids=${tokenAddress}&pagination_by=BeforeId&id=${tableRowsTemp[tableRowsTemp.length - 1].id
-          }&limit=${ENTRIES_PER_REQUEST}`,
-      };
-    },
-  });
-
-  const { sendMessage } = useWebSocket(`${WEBSOCKET_URL}`, {
-    onOpen: () => {
-      console.log("opened");
-      setWebsocketInitialized(false);
-    },
-    onMessage: (event) => {
-      const trade = JSON.parse(event.data);
-      let row = tradeEventToRow(trade, tokenAddress, allTokensMetadata);
-      list.insert(0, row);
-    },
-  });
-
-  useEffect(() => {
-    try {
-      fetch("https://prices.intear.tech/tokens", { method: "GET" })
-        .then((response) => response.json())
-        .then((data) => {
-          setAllTokensMetadata(data);
-        });
-    } catch (e) {
-      console.log(e);
-    }
-  }, []);
-
-  useEffect(() => {
-    list.reload();
-  }, [allTokensMetadata]);
-
-  useEffect(() => {
-    if (websocketInitialized) return;
-    sendMessage(JSON.stringify({ involved_token_account_ids: [tokenAddress] }));
-    console.log("message sent");
-    setWebsocketInitialized(true);
-  }, [websocketInitialized]);
-
   return (
-    <div className="mt-4 flex flex-col justify-center h-[600px]">
-      <TableInfiniteScroll
-        hasMore={hasMore}
-        isLoading={isLoading}
-        list={list}
-        columns={columns}
+    <div>
+      <TablePaginated<TradeEvent>
+        eventName="trade_swap"
+        baseFilters={{
+          "involved_token_account_ids": [tokenId].join(","),
+        }}
+        customFilters={{}}
+        columns={{
+          "transactionId": {
+            label: "TX HASH",
+            getValue: (event: TradeEvent) => <TableElementTransactionHash transactionHash={event.transaction_id} />,
+          },
+          "time": {
+            label: "TIME",
+            getValue: (event: TradeEvent) => <TableElementTime timestampNanosec={event.block_timestamp_nanosec} />,
+          },
+          "type": {
+            label: "TYPE",
+            getValue: (event: TradeEvent) => parseInt(event.balance_changes[tokenId])
+              ? parseInt(event.balance_changes[tokenId]) < 0
+                ? "sell"
+                : "buy"
+              : "Arbitrage",
+          },
+          "fromAmount": {
+            label: "AMOUNT",
+            getValue: (event: TradeEvent) => event.balance_changes[tokenId]
+              ? <TableElementTransferAmount tokenId={tokenId} amount={BigInt(event.balance_changes[tokenId].replace(/^-/, ""))} />
+              : "0 🤡"
+          },
+          "swappedFor": {
+            label: "SWAPPED FOR",
+            getValue: (event: TradeEvent) => {
+              let otherTokenId = Object.keys(event.balance_changes).find(
+                (key) => key !== tokenId
+              );
+              if (otherTokenId === undefined) {
+                return "Arbitrage";
+              } else if (event.balance_changes[otherTokenId]) {
+                return <TableElementTransferAmount tokenId={otherTokenId} amount={BigInt(event.balance_changes[otherTokenId].replace(/^-/, ""))} />;
+              } else {
+                return "0 🤡";
+              }
+            }
+          },
+          "trader": {
+            label: "TRADER",
+            getValue: (event: TradeEvent) => <TableElementAccountId accountId={event.trader} />,
+          },
+        }}
       />
     </div>
   );

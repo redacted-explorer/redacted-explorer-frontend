@@ -1,6 +1,6 @@
 "use client";
 
-import FtTransferTableNew from "@/components/tables/FtTransferTableNew";
+import FtTransferTable from "@/components/tables/FtTransferTable";
 import TradeHistoryTable from "@/components/tables/TradeHistoryTable";
 import TokenOverview from "@/components/tokens/TokenOverview";
 import Pill from "@/components/ui/Pill";
@@ -9,14 +9,14 @@ import { useState } from "react";
 
 const tabs = ["Transactions", "Trade History"];
 
-export default function Page({ params }: { params: { address: string } }) {
+export default function Page({ params }: { params: { tokenId: string } }) {
   const [activeTab, setActiveTab] = useState(tabs[0]);
   return (
     <div className="flex justify-center items-center ">
       <div className="flex flex-col justify-center items-stretch w-[80%]">
-        <TokenOverview tokenAddress={params.address} />
+        <TokenOverview tokenAddress={params.tokenId} />
         <div className="flex justify-center">
-          <TradingViewChart symbol={params.address} />
+          <TradingViewChart symbol={params.tokenId} />
         </div>
         <div className="mt-8 mb-4 flex flex-wrap gap-2 w-full">
           {tabs.map((tab) => (
@@ -32,10 +32,10 @@ export default function Page({ params }: { params: { address: string } }) {
           ))}
         </div>
         {activeTab === "Transactions" && (
-          <FtTransferTableNew contractId={params.address} />
+          <FtTransferTable tokenId={params.tokenId} />
         )}
         {activeTab === "Trade History" && (
-          <TradeHistoryTable tokenAddress={params.address}></TradeHistoryTable>
+          <TradeHistoryTable tokenId={params.tokenId}></TradeHistoryTable>
         )}
       </div>
     </div>

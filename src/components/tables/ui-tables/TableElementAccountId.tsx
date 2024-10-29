@@ -3,7 +3,7 @@ import { truncateString } from "../../../../utils";
 import { useState } from "react";
 import { MdContentCopy } from "react-icons/md";
 
-export default function TableElementAccountAddress({
+export default function TableElementAccountId({
   accountId,
 }: {
   accountId: string;

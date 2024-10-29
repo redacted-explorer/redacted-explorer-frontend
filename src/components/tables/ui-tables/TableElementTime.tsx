@@ -1,9 +1,9 @@
-import { ReactNode } from "react";
+import { TimeAgo } from "@/components/ui/TimeAgo";
 
 export default function TableElementTime({
-  children,
+  timestampNanosec,
 }: {
-  children: ReactNode;
+  timestampNanosec: number;
 }) {
-  return <div className="min-w-[6rem]">{children}</div>;
+  return <div className="min-w-[6rem]"><TimeAgo timestampNanosec={timestampNanosec} /></div>;
 }

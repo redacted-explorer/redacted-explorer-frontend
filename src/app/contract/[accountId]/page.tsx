@@ -1,5 +1,5 @@
 "use client";
-import FtTransferTableNew from "@/components/tables/FtTransferTableNew";
+import FtTransferTable from "@/components/tables/FtTransferTable";
 import TransactionsTable from "@/components/tables/TransactionsTable";
 import Pill from "@/components/ui/Pill";
 import { useState } from "react";
@@ -28,7 +28,7 @@ export default function Page({ params }: { params: { accountId: string } }) {
           <TransactionsTable receiverId={params.accountId} />
         )}
         {activeTab === "Token Txns" && (
-          <FtTransferTableNew accountId={params.accountId} />
+          <FtTransferTable accountId={params.accountId} />
         )}
       </div>
     </div>

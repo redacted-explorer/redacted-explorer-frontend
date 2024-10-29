@@ -8,140 +8,131 @@ import {
   TableColumn,
   TableRow,
   TableCell,
-  getKeyValue,
 } from "@nextui-org/table";
-import { useEffect, useState } from "react";
-import { TokenData } from "../../../types";
+import React, { useEffect, useState } from "react";
 
-type Column = {
-  key: string;
-  label: string;
-};
+const ENTRIES_PER_PAGE: number = 5;
 
-type Row = {
+interface Event {
+}
+
+type EventInfo<E extends Event> = {
   id: number;
-  [key: string]: any;
-};
+  event: E;
+}
 
-export default function TablePaginated({
-  fetchRows,
+type TableInfo<E extends Event> = {
+  eventName: string;
+  baseFilters: { [key: string]: string };
+  customFilters: { [key: string]: string };
+  columns: { [columnId: string]: Column<E> };
+}
+
+type Column<E extends Event> = {
+  label: React.ReactNode;
+  getValue: (event: E) => React.ReactNode;
+}
+
+export default function TablePaginated<E extends Event>({
+  eventName,
+  baseFilters,
+  customFilters,
   columns,
-  entriesPerPageList,
-  getInitializeTableUrl,
-  getUpdateEntriesPerPageUrl,
-  getNextPageUrl,
-  getPreviousPageUrl,
-}: {
-  fetchRows: (
-    url: string,
-    allTokensMetadata: Record<string, TokenData> | null,
-    sort?: boolean
-  ) => Promise<Row[]>;
-  columns: Column[];
-  entriesPerPageList: number[];
-  getInitializeTableUrl: (entriesPerPage: number) => string;
-  getUpdateEntriesPerPageUrl: (id: number, entriesPerPage: number) => string;
-  getNextPageUrl: (id: number, entriesPerPage: number) => string;
-  getPreviousPageUrl: (id: number, entriesPerPage: number) => string;
-}) {
-  const [indexFirstEntry, setIndexFirstEntry] = useState(0);
-  const [firstPage, setFirstPage] = useState(true);
-  const [lastPage, setLastPage] = useState(true);
-  const [entriesPerPage, setEntriesPerPage] = useState(entriesPerPageList[0]);
-  const [tableRows, setTableRows] = useState<Row[] | null>(null);
+}: TableInfo<E>) {
+  const [indexOfFirstEntryOnPage, setIndexFirstEntry] = useState(0);
+  const [isFirstPage, setIsFirstPage] = useState(true);
+  const [isLastPage, setIsLastPage] = useState(true);
+  const [tableRows, setTableRows] = useState<EventInfo<E>[]>([]);
   const [initialized, setInitialized] = useState(false);
-  const [metadataInitialized, setMetadataInitialized] = useState(false);
-  const [allTokensMetadata, setAllTokensMetadata] = useState<Record<
-    string,
-    TokenData
-  > | null>(null);
 
   useEffect(() => {
-    if (initialized || !metadataInitialized) return;
+    if (initialized) return;
     initializeTable();
-  }, [metadataInitialized]);
-
-  useEffect(() => {
-    if (metadataInitialized) return;
-    try {
-      fetch("https://prices.intear.tech/tokens", { method: "GET" })
-        .then((response) => response.json())
-        .then((data) => {
-          setAllTokensMetadata(data);
-          setMetadataInitialized(true);
-        });
-    } catch (e) {
-      console.log(e);
-    }
   });
 
   function getIdFirstEntry() {
-    return tableRows![0].id;
+    return tableRows[0].id;
   }
 
   function getIdLastEntry() {
-    return tableRows![tableRows!.length - 1].id;
+    return tableRows[tableRows.length - 1].id;
   }
 
   async function initializeTable() {
-    const entries = await fetchRows(
-      getInitializeTableUrl(entriesPerPage),
-      allTokensMetadata
-    );
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(baseFilters)) {
+      query.append(key, value);
+    }
+    for (const [key, value] of Object.entries(customFilters)) {
+      query.append(key, value);
+    }
+    query.append("pagination_by", "Newest");
+    query.append("limit", ENTRIES_PER_PAGE.toString());
+    const url = `https://events.intear.tech/query/${eventName}?${query.toString()}`;
+    const entries = await fetch(url)
+      .then((response) => response.json())
     if (entries.length === 0) {
       console.log("Transaction array is empty");
       return;
     }
-    setLastPage(entries.length < entriesPerPage);
+    setIsLastPage(entries.length < ENTRIES_PER_PAGE);
     setTableRows(entries);
     setInitialized(true);
   }
 
   async function nextPage() {
     console.log("next");
-    if (!tableRows || tableRows.length === 0) return;
+    if (tableRows.length === 0) return;
 
-    const entries = await fetchRows(
-      getNextPageUrl(getIdLastEntry(), entriesPerPage),
-      allTokensMetadata
-    );
-    if (entries.length < entriesPerPage) {
-      setLastPage(true);
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(baseFilters)) {
+      query.append(key, value);
+    }
+    for (const [key, value] of Object.entries(customFilters)) {
+      query.append(key, value);
+    }
+    query.append("pagination_by", "BeforeId");
+    query.append("id", getIdLastEntry().toString());
+    query.append("limit", ENTRIES_PER_PAGE.toString());
+    const url = `https://events.intear.tech/query/${eventName}?${query.toString()}`;
+    const entries = await fetch(url)
+      .then((response) => response.json())
+
+    if (entries.length < ENTRIES_PER_PAGE) {
+      setIsLastPage(true);
       if (entries.length === 0) return;
     }
-    setIndexFirstEntry((prev) => prev + entriesPerPage);
-    setFirstPage(false);
+    setIndexFirstEntry((prev) => prev + ENTRIES_PER_PAGE);
+    setIsFirstPage(false);
     setTableRows(entries);
   }
 
   async function previousPage() {
-    if (!tableRows || tableRows.length === 0) return;
+    if (tableRows.length === 0) return;
 
-    let id = getIdFirstEntry();
-    if (indexFirstEntry <= entriesPerPage) {
-      id = tableRows![entriesPerPage - indexFirstEntry].id;
+    let afterId = getIdFirstEntry();
+    if (indexOfFirstEntryOnPage <= ENTRIES_PER_PAGE) {
+      afterId = tableRows[ENTRIES_PER_PAGE - indexOfFirstEntryOnPage].id;
       setIndexFirstEntry(0);
-      setFirstPage(true);
+      setIsFirstPage(true);
     } else {
-      setIndexFirstEntry((prev) => prev - entriesPerPage);
+      setIndexFirstEntry((prev) => prev - ENTRIES_PER_PAGE);
     }
-    const entries = await fetchRows(
-      getPreviousPageUrl(id, entriesPerPage),
-      allTokensMetadata,
-      true
-    );
-    if (entries.length === entriesPerPage) setLastPage(false);
-    setTableRows(entries);
-  }
-
-  async function updateEntriesPerPage(n: number) {
-    setEntriesPerPage(n);
-    if (!tableRows || tableRows.length === 0) return;
-    const entries = await fetchRows(
-      getUpdateEntriesPerPageUrl(getIdFirstEntry(), n),
-      allTokensMetadata
-    );
-    if (entries.length < entriesPerPage) setLastPage(true);
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(baseFilters)) {
+      query.append(key, value);
+    }
+    for (const [key, value] of Object.entries(customFilters)) {
+      query.append(key, value);
+    }
+    query.append("pagination_by", "AfterId");
+    query.append("id", afterId.toString());
+    query.append("limit", ENTRIES_PER_PAGE.toString());
+    const url = `https://events.intear.tech/query/${eventName}?${query.toString()}`;
+    const entries = await fetch(url)
+      .then((response) => response.json())
+      .then((response) => response.reverse())
+    setIsLastPage(false);
     setTableRows(entries);
   }
 
@@ -151,16 +142,16 @@ export default function TablePaginated({
         <div>
           <div className="flex flex-col justify-center">
             <Table>
-              <TableHeader columns={columns}>
-                {(column) => (
-                  <TableColumn key={column.key}>{column.label}</TableColumn>
+              <TableHeader columns={Object.entries(columns)}>
+                {([columnId, column]) => (
+                  <TableColumn key={columnId}>{column.label}</TableColumn>
                 )}
               </TableHeader>
               <TableBody items={tableRows}>
                 {(item) => (
                   <TableRow key={item.id}>
                     {(columnKey) => (
-                      <TableCell>{getKeyValue(item, columnKey)}</TableCell>
+                      <TableCell>{columns[columnKey].getValue(item.event)}</TableCell>
                     )}
                   </TableRow>
                 )}
@@ -170,23 +161,12 @@ export default function TablePaginated({
 
           <div className="flex flex-col gap-2 my-4">
             <div className="flex gap-2">
-              <Button isDisabled={firstPage} onClick={previousPage}>
+              <Button isDisabled={isFirstPage} onClick={previousPage}>
                 Previous
               </Button>
-              <Button isDisabled={lastPage} onClick={nextPage}>
+              <Button isDisabled={isLastPage} onClick={nextPage}>
                 Next
               </Button>
-            </div>
-            <div>Results Per Page</div>
-            <div className="flex gap-2">
-              {entriesPerPageList.map((amount) => (
-                <Button
-                  key={amount}
-                  onClick={() => updateEntriesPerPage(amount)}
-                >
-                  {amount}
-                </Button>
-              ))}
             </div>
           </div>
         </div>

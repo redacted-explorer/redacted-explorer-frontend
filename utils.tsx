@@ -2,15 +2,13 @@ import { TimeAgo } from "@/components/ui/TimeAgo";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import {
   TokenData,
-  TokenMetadata,
   TokenTransferData,
   TokenTransferTableRow,
   TradeTableRow,
   TransactionData,
   TransactionTableRow,
 } from "./types";
-import Link from "next/link";
-import TableElementAccountAddress from "@/components/tables/ui-tables/TableElementAccountAddress";
+import TableElementAccountId from "@/components/tables/ui-tables/TableElementAccountId";
 import TableElementTransactionHash from "@/components/tables/ui-tables/TableElementTransactionHash";
 import TableElementTime from "@/components/tables/ui-tables/TableElementTime";
 import TableElementTransferAmount from "@/components/tables/ui-tables/TableElementTransferAmount";
@@ -116,15 +114,14 @@ export function transactionDataToRow(
   );
   const blockHeight = data.event.block_height;
   const time = (
-    <TableElementTime>
-      <TimeAgo timestampNanosec={data.event.block_timestamp_nanosec}></TimeAgo>
+    <TableElementTime timestampNanosec={data.event.block_timestamp_nanosec}>
     </TableElementTime>
   );
   const receiver = (
-    <TableElementAccountAddress accountId={data.event.receiver_id} />
+    <TableElementAccountId accountId={data.event.receiver_id} />
   );
   const signer = (
-    <TableElementAccountAddress accountId={data.event.signer_id} />
+    <TableElementAccountId accountId={data.event.signer_id} />
   );
   console.log(data);
   const row: TransactionTableRow = {
@@ -144,14 +141,13 @@ export function ftTransferEventToRow(
 ) {
   const { id } = data;
   const sender = (
-    <TableElementAccountAddress accountId={data.event.old_owner_id} />
+    <TableElementAccountId accountId={data.event.old_owner_id} />
   );
   const receiver = (
-    <TableElementAccountAddress accountId={data.event.new_owner_id} />
+    <TableElementAccountId accountId={data.event.new_owner_id} />
   );
   const time = (
-    <TableElementTime>
-      <TimeAgo timestampNanosec={data.event.block_timestamp_nanosec}></TimeAgo>
+    <TableElementTime timestampNanosec={data.event.block_timestamp_nanosec}>
     </TableElementTime>
   );
   const blockHeight = data.event.block_height;
@@ -175,9 +171,8 @@ export function ftTransferEventToRow(
     blockHeight,
     transfer: (
       <TableElementTransferAmount
-        amount={formatNumber(Number(amount))}
-        ticker={truncateString(tokenId, 6)}
-        tokenAddress={data.event.token_id}
+        amount={BigInt(amount)}
+        tokenId={data.event.token_id}
       ></TableElementTransferAmount>
     ),
     sender,
@@ -264,7 +259,7 @@ export function tradeEventToRow(
     fromAmount,
     swappedFor,
     price: "coming soon",
-    maker: <TableElementAccountAddress accountId={trader} />,
+    maker: <TableElementAccountId accountId={trader} />,
     txn: txnLink,
   };
   console.log("Returning the following row", row);

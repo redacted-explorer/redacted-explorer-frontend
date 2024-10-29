@@ -3,16 +3,15 @@ import { MdContentCopy } from "react-icons/md";
 
 export default function TableElementTransferAmount({
   amount,
-  ticker,
-  tokenAddress,
+  tokenId: tokenId,
 }: {
-  amount: string;
-  ticker: string;
-  tokenAddress: string;
+  amount: BigInt;
+  tokenId: string;
 }) {
+  // TODO get metadata with global cache, and format the amount
   const [hover, setHover] = useState(false);
   function handleCopy() {
-    navigator.clipboard.writeText(tokenAddress);
+    navigator.clipboard.writeText(tokenId);
   }
   return (
     <div
@@ -20,9 +19,9 @@ export default function TableElementTransferAmount({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      {amount}{" "}
+      {amount.toString()}{" "}
       <span className="hover:cursor-pointer hover:text-orange-500">
-        <a href={`/token/${tokenAddress}`}>{ticker}</a>
+        <a href={`/token/${tokenId}`}>{tokenId}</a>
       </span>
       {hover && (
         <MdContentCopy className="hover:cursor-pointer" onClick={handleCopy} />
