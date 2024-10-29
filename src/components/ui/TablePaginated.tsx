@@ -11,7 +11,7 @@ import {
 } from "@nextui-org/table";
 import React, { useEffect, useState } from "react";
 
-const ENTRIES_PER_PAGE: number = 5;
+const ENTRIES_PER_PAGE: number = 20;
 
 interface Event {
 }
