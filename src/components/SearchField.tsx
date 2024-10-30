@@ -6,7 +6,7 @@ import Link from "next/link";
 type SearchResult = {
   id: string;
   display: React.ReactNode;
-}
+};
 
 export default function SearchField() {
   const [input, setInput] = useState("");
@@ -24,13 +24,11 @@ export default function SearchField() {
   });
 
   async function searchAccounts(query: string): Promise<SearchResult[]> {
-    const accounts = [
-      "root.near",
-      "slimedragon.near",
-      "within4d45.near",
-    ];
+    const accounts = ["root.near", "slimedragon.near", "within4d45.near"];
     try {
-      const results = accounts.filter((account) => account.startsWith(query.toLowerCase()));
+      const results = accounts.filter((account) =>
+        account.startsWith(query.toLowerCase())
+      );
       console.log(results);
       if (results.includes(query)) {
         return [
@@ -38,10 +36,14 @@ export default function SearchField() {
             id: query,
             display: query,
           },
-          ...results.filter((account) => account !== query).map((account) => ({ id: account, display: account })),
-        ]
+          ...results
+            .filter((account) => account !== query)
+            .map((account) => ({ id: account, display: account })),
+        ];
       } else {
-        const accountExists = await fetch(`https://api.fastnear.com/v1/account/${query}/full`)
+        const accountExists = await fetch(
+          `https://api.fastnear.com/v1/account/${query}/full`
+        )
           .then((res) => res.json())
           .then((data) => {
             return typeof data !== "string" && data.state !== null;
@@ -66,12 +68,16 @@ export default function SearchField() {
 
   async function searchTokens(query: string): Promise<SearchResult[]> {
     try {
-      return await fetch(
-        `https://prices.intear.tech/token-search?q=${query}`,
-        { method: "GET" }
-      )
+      return await fetch(`https://prices.intear.tech/token-search?q=${query}`, {
+        method: "GET",
+      })
         .then((res) => res.json())
-        .then((data) => data.map((token: TokenData) => ({ id: token.account_id, display: token.metadata.name })));
+        .then((data) =>
+          data.map((token: TokenData) => ({
+            id: token.account_id,
+            display: token.metadata.name,
+          }))
+        );
     } catch (e) {
       console.log("Error searching for token\n", e);
       return [];
@@ -122,69 +128,76 @@ export default function SearchField() {
     <div className="flex flex-col gap-2 items-center" ref={ref}>
       <div className="flex gap-2 justify-center items-center">
         <div className="relative">
-          <Input
+          <input
             type="input"
-            radius="sm"
             placeholder="Search"
-            className="h-full text-white px-2 w-[30rem]"
+            className="h-full text-white rounded-lg px-2 py-2 w-[30rem] bg-gray-900 "
             value={input}
             onInput={(e) => {
               search(e.currentTarget.value);
             }}
             onFocus={() => setFocus(true)}
             onBlur={() => setFocus(true)}
-          />
+          ></input>
 
-          {focus && (results.accounts.length !== 0 || results.tokens.length !== 0 || results.transactions.length !== 0) && (
-            <div className="flex gap-2 flex-col absolute py-3 left-0 mt-1 w-full text-white rounded-md shadow-lg bg-slate-700 z-50">
-              {results.accounts.length !== 0 && (
-                <div className="flex flex-col gap-1">
-                  <div className="bg-slate-500 rounded px-3 py-2">Accounts</div>
-                  {
-                    results.accounts.map((account) => (
+          {focus &&
+            (results.accounts.length !== 0 ||
+              results.tokens.length !== 0 ||
+              results.transactions.length !== 0) && (
+              <div className="flex gap-2 flex-col absolute py-3 left-0 mt-1 w-full text-white rounded-md shadow-lg bg-gray-900 z-50">
+                {results.accounts.length !== 0 && (
+                  <div className="flex flex-col gap-1">
+                    <div className="bg-gray-600 rounded px-3 py-2 font-semibold">
+                      Accounts
+                    </div>
+                    {results.accounts.map((account) => (
                       <Link href={`/account/${account.id}`}>
-                        <div className="px-3 py-2 rounded hover:bg-slate-500" key={account.id}>
+                        <div
+                          className="px-3 py-2 rounded hover:bg-gray-600 text-sm"
+                          key={account.id}
+                        >
                           {account.display}
                         </div>
                       </Link>
-                    ))
-                  }
-                </div>
-              )}
-              {results.tokens.length !== 0 && (
-                <div className="flex flex-col gap-1">
-                  <div className="bg-slate-500 rounded px-3 py-2">
-                    Tokens
+                    ))}
                   </div>
-                  {
-                    results.tokens.map((token) => (
+                )}
+                {results.tokens.length !== 0 && (
+                  <div className="flex flex-col gap-1">
+                    <div className="bg-gray-600 rounded px-3 py-2 font-semibold">
+                      Tokens
+                    </div>
+                    {results.tokens.map((token) => (
                       <Link href={`/token/${token.id}`}>
-                        <div className="px-3 py-2 rounded hover:bg-slate-500" key={token.id}>
+                        <div
+                          className="px-3 py-2 rounded hover:bg-gray-600 text-sm"
+                          key={token.id}
+                        >
                           {token.display}
                         </div>
                       </Link>
-                    ))
-                  }
-                </div>
-              )}
-              {results.transactions.length !== 0 && (
-                <div className="flex flex-col gap-1">
-                  <div className="bg-slate-500 rounded px-3 py-2">
-                    Transactions
+                    ))}
                   </div>
-                  {
-                    results.transactions.map((transaction) => (
+                )}
+                {results.transactions.length !== 0 && (
+                  <div className="flex flex-col gap-1">
+                    <div className="bg-gray-600 rounded px-3 py-2 font-semibold">
+                      Transactions
+                    </div>
+                    {results.transactions.map((transaction) => (
                       <Link href={`/transaction/${transaction.id}`}>
-                        <div className="px-3 py-2 rounded hover:bg-slate-500" key={transaction.id}>
+                        <div
+                          className="px-3 py-2 rounded hover:bg-gray-600 text-sm"
+                          key={transaction.id}
+                        >
                           {transaction.display}
                         </div>
                       </Link>
-                    ))
-                  }
-                </div>
-              )}
-            </div>
-          )}
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           {focus &&
             input !== "" &&
             !(results.accounts || results.transactions) && (

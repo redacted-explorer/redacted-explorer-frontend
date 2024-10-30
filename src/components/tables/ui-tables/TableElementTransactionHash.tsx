@@ -17,18 +17,11 @@ export default function TableElementTransactionHash({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <div className="flex relative">
-        <div className="min-w-[10rem] relative flex">
-          <span className="mr-1">{truncateString(transactionHash, 12)}</span>
-          {hover && <CopyButton text={transactionHash} />}
-        </div>
-
-        <Link
-          href={`https://nearvalidate.org/txns/${transactionHash}`}
-          className="inline-flex"
-        >
-          <FaExternalLinkAlt />
+      <div className="min-w-[9rem] relative flex">
+        <Link href={`https://nearvalidate.org/txns/${transactionHash}`}>
+          <span className="mr-1 ">{truncateString(transactionHash, 12)}</span>
         </Link>
+        {hover && <CopyButton text={transactionHash} />}
       </div>
     </div>
   );

@@ -19,8 +19,7 @@ export default function RootLayout({
       <TimeProvider>
         <body className="flex flex-col min-h-screen dark text-foreground bg-background">
           <Header />
-            {children}
-          <Footer />
+          {children}
         </body>
       </TimeProvider>
     </html>
