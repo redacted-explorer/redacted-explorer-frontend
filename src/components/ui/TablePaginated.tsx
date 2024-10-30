@@ -11,8 +11,6 @@ import {
 } from "@nextui-org/table";
 import React, { useEffect, useState } from "react";
 
-const ENTRIES_PER_PAGE: number = 20;
-
 interface Event {
 }
 
@@ -29,6 +27,7 @@ type TableInfo<E extends Event> = {
   baseFilter: EventFilter;
   customFilter: EventFilter;
   columns: { [columnId: string]: Column<E> };
+  entriesPerPage?: number;
 }
 
 type Column<E extends Event> = {
@@ -41,6 +40,7 @@ export default function TablePaginated<E extends Event>({
   baseFilter,
   customFilter,
   columns,
+  entriesPerPage = 20,
 }: TableInfo<E>) {
   const [indexOfFirstEntryOnPage, setIndexFirstEntry] = useState(0);
   const [isFirstPage, setIsFirstPage] = useState(true);
@@ -70,7 +70,7 @@ export default function TablePaginated<E extends Event>({
       query.append(key, value);
     }
     query.append("pagination_by", "Newest");
-    query.append("limit", ENTRIES_PER_PAGE.toString());
+    query.append("limit", entriesPerPage.toString());
     const url = `https://events.intear.tech/query/${eventName}?${query.toString()}`;
     const entries = await fetch(url)
       .then((response) => response.json())
@@ -78,7 +78,7 @@ export default function TablePaginated<E extends Event>({
       console.log("Transaction array is empty");
       return;
     }
-    setIsLastPage(entries.length < ENTRIES_PER_PAGE);
+    setIsLastPage(entries.length < entriesPerPage);
     setTableRows(entries);
     setInitialized(true);
   }
@@ -96,16 +96,16 @@ export default function TablePaginated<E extends Event>({
     }
     query.append("pagination_by", "BeforeId");
     query.append("id", getIdLastEntry().toString());
-    query.append("limit", ENTRIES_PER_PAGE.toString());
+    query.append("limit", entriesPerPage.toString());
     const url = `https://events.intear.tech/query/${eventName}?${query.toString()}`;
     const entries = await fetch(url)
       .then((response) => response.json())
 
-    if (entries.length < ENTRIES_PER_PAGE) {
+    if (entries.length < entriesPerPage) {
       setIsLastPage(true);
       if (entries.length === 0) return;
     }
-    setIndexFirstEntry((prev) => prev + ENTRIES_PER_PAGE);
+    setIndexFirstEntry((prev) => prev + entriesPerPage);
     setIsFirstPage(false);
     setTableRows(entries);
   }
@@ -114,12 +114,12 @@ export default function TablePaginated<E extends Event>({
     if (tableRows.length === 0) return;
 
     let afterId = getIdFirstEntry();
-    if (indexOfFirstEntryOnPage <= ENTRIES_PER_PAGE) {
-      afterId = tableRows[ENTRIES_PER_PAGE - indexOfFirstEntryOnPage].id;
+    if (indexOfFirstEntryOnPage <= entriesPerPage) {
+      afterId = tableRows[entriesPerPage - indexOfFirstEntryOnPage].id;
       setIndexFirstEntry(0);
       setIsFirstPage(true);
     } else {
-      setIndexFirstEntry((prev) => prev - ENTRIES_PER_PAGE);
+      setIndexFirstEntry((prev) => prev - entriesPerPage);
     }
     const query = new URLSearchParams();
     for (const [key, value] of Object.entries(baseFilter)) {
@@ -130,7 +130,7 @@ export default function TablePaginated<E extends Event>({
     }
     query.append("pagination_by", "AfterId");
     query.append("id", afterId.toString());
-    query.append("limit", ENTRIES_PER_PAGE.toString());
+    query.append("limit", entriesPerPage.toString());
     const url = `https://events.intear.tech/query/${eventName}?${query.toString()}`;
     const entries = await fetch(url)
       .then((response) => response.json())
