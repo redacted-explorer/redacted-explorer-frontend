@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import { truncateString } from "../../../utils";
-import { Tooltip, Button } from "@nextui-org/react";
 import { useState } from "react";
-import { MdContentCopy } from "react-icons/md";
+import CopyButton from "../../ui/CopyButton";
 
 export default function TableElementTransactionHash({
   transactionHash,
@@ -13,9 +12,6 @@ export default function TableElementTransactionHash({
   transactionHash: string;
 }) {
   const [hover, setHover] = useState(false);
-  function handleCopy() {
-    navigator.clipboard.writeText(transactionHash);
-  }
   return (
     <div
       onMouseEnter={() => setHover(true)}
@@ -24,19 +20,14 @@ export default function TableElementTransactionHash({
       <div className="flex relative">
         <div className="min-w-[10rem] relative flex">
           <span className="mr-1">{truncateString(transactionHash, 12)}</span>
-          {hover && (
-            <MdContentCopy
-              className="hover:cursor-pointer"
-              onClick={handleCopy}
-            />
-          )}
+          {hover && <CopyButton text={transactionHash} />}
         </div>
 
         <Link
           href={`https://nearvalidate.org/txns/${transactionHash}`}
           className="inline-flex"
         >
-          <FaExternalLinkAlt></FaExternalLinkAlt>
+          <FaExternalLinkAlt />
         </Link>
       </div>
     </div>

@@ -10,11 +10,14 @@ import { useState } from "react";
 const tabs = ["Transactions", "Trade History"];
 
 export default function Page({ params }: { params: { tokenId: string } }) {
+  if (params.tokenId === "near") {
+    params.tokenId = "wrap.near";
+  }
   const [activeTab, setActiveTab] = useState(tabs[0]);
   return (
     <div className="flex justify-center items-center ">
       <div className="flex flex-col justify-center items-stretch w-[80%]">
-        <TokenOverview tokenAddress={params.tokenId} />
+        <TokenOverview tokenId={params.tokenId} />
         <div className="flex justify-center">
           <TradingViewChart symbol={params.tokenId} />
         </div>

@@ -16,6 +16,9 @@ const ENTRIES_PER_PAGE: number = 20;
 interface Event {
 }
 
+interface EventFilter {
+}
+
 type EventInfo<E extends Event> = {
   id: number;
   event: E;
@@ -23,8 +26,8 @@ type EventInfo<E extends Event> = {
 
 type TableInfo<E extends Event> = {
   eventName: string;
-  baseFilters: { [key: string]: string };
-  customFilters: { [key: string]: string };
+  baseFilter: EventFilter;
+  customFilter: EventFilter;
   columns: { [columnId: string]: Column<E> };
 }
 
@@ -35,8 +38,8 @@ type Column<E extends Event> = {
 
 export default function TablePaginated<E extends Event>({
   eventName,
-  baseFilters,
-  customFilters,
+  baseFilter,
+  customFilter,
   columns,
 }: TableInfo<E>) {
   const [indexOfFirstEntryOnPage, setIndexFirstEntry] = useState(0);
@@ -60,10 +63,10 @@ export default function TablePaginated<E extends Event>({
 
   async function initializeTable() {
     const query = new URLSearchParams();
-    for (const [key, value] of Object.entries(baseFilters)) {
+    for (const [key, value] of Object.entries(baseFilter)) {
       query.append(key, value);
     }
-    for (const [key, value] of Object.entries(customFilters)) {
+    for (const [key, value] of Object.entries(customFilter)) {
       query.append(key, value);
     }
     query.append("pagination_by", "Newest");
@@ -85,10 +88,10 @@ export default function TablePaginated<E extends Event>({
     if (tableRows.length === 0) return;
 
     const query = new URLSearchParams();
-    for (const [key, value] of Object.entries(baseFilters)) {
+    for (const [key, value] of Object.entries(baseFilter)) {
       query.append(key, value);
     }
-    for (const [key, value] of Object.entries(customFilters)) {
+    for (const [key, value] of Object.entries(customFilter)) {
       query.append(key, value);
     }
     query.append("pagination_by", "BeforeId");
@@ -119,10 +122,10 @@ export default function TablePaginated<E extends Event>({
       setIndexFirstEntry((prev) => prev - ENTRIES_PER_PAGE);
     }
     const query = new URLSearchParams();
-    for (const [key, value] of Object.entries(baseFilters)) {
+    for (const [key, value] of Object.entries(baseFilter)) {
       query.append(key, value);
     }
-    for (const [key, value] of Object.entries(customFilters)) {
+    for (const [key, value] of Object.entries(customFilter)) {
       query.append(key, value);
     }
     query.append("pagination_by", "AfterId");

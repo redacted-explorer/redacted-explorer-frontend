@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@nextui-org/button";
+import { TokenData } from "@/utils";
 
 const FIVE_MINUTES = 1000 * 60 * 5;
 const ONE_HOUR = 1000 * 60 * 60;
@@ -14,29 +15,10 @@ export type PriceData = {
   token: string;
 };
 
-export type TokenData = {
-  account_id: string;
-  circulating_supply: string;
-  circulating_supply_excluding_team: string;
-  total_supply: string;
-  deleted: boolean;
-  main_pool: string;
-  price_usd: string;
-  price_usd_raw: string;
-  reputation: string;
-  metadata: TokenMetadata;
-};
-
-export type TokenMetadata = {
-  name: string;
-  symbol: string;
-  decimals: number;
-};
-
 export default function TokenOverview({
-  tokenAddress,
+  tokenId,
 }: {
-  tokenAddress: string;
+  tokenId: string;
 }) {
   const [tokenData, setTokenData] = useState({
     name: "loading",
@@ -59,7 +41,7 @@ export default function TokenOverview({
     "priceChange7d",
   ];
 
-  async function getHistoricalPrices() {
+  async function updateHistoricalPrices() {
     const tokenInfo: TokenData | undefined = await getTokenInfo();
     if (tokenInfo === undefined) return;
     const currentPrice = tokenInfo.price_usd;
@@ -71,7 +53,7 @@ export default function TokenOverview({
     const timestamps = times.map((time) => timestamp - time);
     const urls = timestamps.map(
       (stamp) =>
-        `https://events.intear.tech/query/price_token?token=${tokenAddress}&pagination_by=BeforeTimestamp&timestamp_nanosec=${
+        `https://events.intear.tech/query/price_token?token=${tokenId}&pagination_by=BeforeTimestamp&timestamp_nanosec=${
           stamp * 1000000
         }&limit=1`
     );
@@ -108,11 +90,10 @@ export default function TokenOverview({
   async function getNearPrice() {
     try {
       const result = await fetch(
-        "https://prices.intear.tech/get-token-price?token_id=wrap.near",
+        "https://prices.intear.tech/price?token_id=wrap.near",
         { method: "GET" }
       );
-      const data: { price: number } = await result.json();
-      return data.price;
+      return await result.json();
     } catch (e) {
       console.log(e);
       return undefined;
@@ -122,7 +103,7 @@ export default function TokenOverview({
   async function getTokenInfo() {
     try {
       const result = await fetch(
-        `https://prices.intear.tech/token?token_id=${tokenAddress}`,
+        `https://prices.intear.tech/token?token_id=${tokenId}`,
         { method: "GET" }
       );
       const data: TokenData = await result.json();
@@ -135,7 +116,7 @@ export default function TokenOverview({
 
   useEffect(() => {
     const initData = async () => {
-      await getHistoricalPrices();
+      await updateHistoricalPrices();
       const nearPrice: number | undefined = await getNearPrice();
       const tokenInfo: TokenData | undefined = await getTokenInfo();
 
@@ -160,10 +141,16 @@ export default function TokenOverview({
     initData();
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updateHistoricalPrices();
+    }, 1000 * 10);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="my-2">
-      <Button onClick={getHistoricalPrices}>Date</Button>
-      <div>{tokenAddress}</div>
+      <div>{tokenId}</div>
       <div>Token Name: {tokenData.name}</div>
       <div>Token Ticker: {tokenData.symbol}</div>
       <div>Current Price (NEAR): {tokenData.priceNear}</div>

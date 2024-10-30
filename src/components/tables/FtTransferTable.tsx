@@ -2,7 +2,7 @@ import TablePaginated from "../ui/TablePaginated";
 import TableElementAccountId from "./ui-tables/TableElementAccountId";
 import TableElementTime from "./ui-tables/TableElementTime";
 import TableElementTransactionHash from "./ui-tables/TableElementTransactionHash";
-import TableElementTransferAmount from "./ui-tables/TableElementTransferAmount";
+import TableElementTransferAmount from "./ui-tables/TableElementTokenAmount";
 
 type FtTransferEvent = {
   amount: `${number}`;
@@ -16,6 +16,11 @@ type FtTransferEvent = {
   transaction_id: string;
 }
 
+type FtTransferEventFilter = {
+  involved_account_ids?: string;
+  token_id?: string;
+}
+
 export default function FtTransferTable({
   accountId,
   tokenId,
@@ -23,7 +28,7 @@ export default function FtTransferTable({
   accountId?: string;
   tokenId?: string;
 }) {
-  const baseFilter: { [key: string]: string } = {};
+  const baseFilter: FtTransferEventFilter = {};
   if (accountId !== undefined) {
     baseFilter["involved_account_ids"] = [accountId].join(",")
   }
@@ -35,8 +40,8 @@ export default function FtTransferTable({
     <div>
       <TablePaginated<FtTransferEvent>
         eventName="ft_transfer"
-        baseFilters={baseFilter}
-        customFilters={{}}
+        baseFilter={baseFilter}
+        customFilter={{}}
         columns={{
           "transactionId": {
             label: "TX HASH",

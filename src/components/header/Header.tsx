@@ -22,7 +22,9 @@ export default function Header() {
     <div className="p-4 border-b-near-green-200 border-b-2">
       <div className="flex justify-between items-center">
         <div>
-          <ExplorerLogo size={"35px"} />
+          <Link href="/">
+            <ExplorerLogo size={"35px"} />
+          </Link>
         </div>
         <SearchField />
         <div className="flex space-x-4">

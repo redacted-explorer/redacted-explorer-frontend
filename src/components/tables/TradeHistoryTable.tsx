@@ -2,7 +2,7 @@ import TablePaginated from "../ui/TablePaginated";
 import TableElementAccountId from "./ui-tables/TableElementAccountId";
 import TableElementTime from "./ui-tables/TableElementTime";
 import TableElementTransactionHash from "./ui-tables/TableElementTransactionHash";
-import TableElementTransferAmount from "./ui-tables/TableElementTransferAmount";
+import TableElementTransferAmount from "./ui-tables/TableElementTokenAmount";
 
 type TradeEvent = {
   balance_changes: { [key: string]: `${number}` },
@@ -11,6 +11,10 @@ type TradeEvent = {
   receipt_id: string;
   trader: string;
   transaction_id: string;
+}
+
+type TradeEventFilter = {
+  involved_token_account_ids?: string;
 }
 
 export default function TradeHistoryTable({
@@ -22,10 +26,10 @@ export default function TradeHistoryTable({
     <div>
       <TablePaginated<TradeEvent>
         eventName="trade_swap"
-        baseFilters={{
+        baseFilter={{
           "involved_token_account_ids": [tokenId].join(","),
-        }}
-        customFilters={{}}
+        } as TradeEventFilter}
+        customFilter={{}}
         columns={{
           "transactionId": {
             label: "TX HASH",
@@ -46,7 +50,7 @@ export default function TradeHistoryTable({
           "fromAmount": {
             label: "AMOUNT",
             getValue: (event: TradeEvent) => event.balance_changes[tokenId]
-              ? <TableElementTransferAmount tokenId={tokenId} amount={BigInt(event.balance_changes[tokenId].replace(/^-/, ""))} />
+              ? <TableElementTransferAmount copyable={false} tokenId={tokenId} amount={BigInt(event.balance_changes[tokenId].replace(/^-/, ""))} />
               : "0 🤡"
           },
           "swappedFor": {

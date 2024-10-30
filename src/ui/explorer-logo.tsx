@@ -29,7 +29,7 @@ function weightedRandom(items: Array<{ url: string; weight: number }>): string {
   return items[items.length - 1].url;
 }
 
-export default function NearblocksLogo({ size }: { size: string }) {
+export default function ExplorerLogo({ size }: { size: string }) {
   const logos = [
     { url: logoNear.src, weight: 82 },
     { url: logoHijack1.src, weight: 3 },

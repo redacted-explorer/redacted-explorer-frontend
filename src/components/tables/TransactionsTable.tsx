@@ -16,6 +16,11 @@ type TransactionEvent = {
   transaction_id: string;
 }
 
+type TransactionEventFilter = {
+  signer_id?: string;
+  receiver_id?: string;
+}
+
 export default function TransactionsTable({
   signerId,
   receiverId,
@@ -23,7 +28,7 @@ export default function TransactionsTable({
   signerId?: string;
   receiverId?: string;
 }) {
-  const baseFilters: { [key: string]: string } = {};
+  const baseFilters: TransactionEventFilter = {};
   if (signerId !== undefined) {
     baseFilters["signer_id"] = signerId;
   }
@@ -35,8 +40,8 @@ export default function TransactionsTable({
     <div>
       <TablePaginated<TransactionEvent>
         eventName="tx_transaction"
-        baseFilters={baseFilters}
-        customFilters={{}}
+        baseFilter={baseFilters}
+        customFilter={{}}
         columns={{
           "transactionId": {
             label: "TX HASH",
