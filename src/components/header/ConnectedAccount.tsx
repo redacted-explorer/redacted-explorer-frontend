@@ -71,6 +71,12 @@ export default function ConnectedAccount() {
                             {connectedAccount === null && <div className="mt-4">
                                 <WalletMultiButton>Solana</WalletMultiButton>
                             </div>}
+                            {connectedAccount === null && !solana.connected && connectedAccount === null && <div className="mt-4">
+                                <WalletMultiButton>Ethereum</WalletMultiButton>
+                            </div>}
+                            {connectedAccount === null && !solana.connected && connectedAccount === null && <div className="mt-4">
+                                <WalletMultiButton>NEAR</WalletMultiButton>
+                            </div>}
                             {solana.connected && connectedAccount === null && !isLoading && (
                                 <div className="mt-4">
                                     <button className="bg-near-green-200 text-black px-4 py-2 rounded-full hover:bg-near-green-300 hover:text-black" onClick={logInWithSolana}>
