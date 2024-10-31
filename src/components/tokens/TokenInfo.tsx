@@ -28,7 +28,7 @@ export default function TokenInfo({
   return (
     <div className="flex flex-col justify-center">
       <div className="grid grid-cols-2 gap-2 w-96">
-        <div className="col-span-2 text-xl py-2 text-center font-bold border-1 border-zinc-400 rounded-lg ">
+        <div className="col-span-2 text-3xl py-4 text-center font-bold border-1 border-zinc-400 text-zinc-200 rounded-lg ">
           ${ticker}
         </div>
         <TokenInfoCard label="PRICE USD" value={`${priceUsdRounded}$`} />

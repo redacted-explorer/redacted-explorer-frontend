@@ -17,10 +17,18 @@ export default function Page({ params }: { params: { tokenId: string } }) {
   return (
     <div className="flex justify-center items-center ">
       <div className="flex flex-col justify-center items-stretch w-full">
-        <TokenOverview tokenId={params.tokenId} />
-        <div className="flex justify-center">
-          <TradingViewChart symbol={params.tokenId} />
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-2 row-span-2">
+            <div className="flex justify-center">
+              <TradingViewChart symbol={params.tokenId} />
+            </div>
+          </div>
+          <div></div>
+          <div className="flex justify-end items-end ">
+            <TokenOverview tokenId={params.tokenId} />
+          </div>
         </div>
+
         <div className="mt-8 mb-4 flex flex-wrap gap-2 w-full">
           {tabs.map((tab) => (
             <Pill
