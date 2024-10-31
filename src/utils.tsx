@@ -1,5 +1,8 @@
 import { connect, KeyPair, keyStores } from "near-api-js";
-import { FailoverRpcProvider, JsonRpcProvider } from "near-api-js/lib/providers";
+import {
+  FailoverRpcProvider,
+  JsonRpcProvider,
+} from "near-api-js/lib/providers";
 
 export function truncateString(str: string, length: number) {
   if (str.length - 3 > length) {
@@ -29,30 +32,43 @@ export type TokenMetadata = {
 
 const tokenMeta: { [key: string]: TokenMetadata } = {};
 
-export async function getTokenMetadata(tokenId: string): Promise<TokenMetadata> {
+export async function getTokenMetadata(
+  tokenId: string
+): Promise<TokenMetadata> {
   if (tokenId === "near") {
     return {
       name: "NEAR",
       symbol: "NEAR",
       decimals: 24,
-    }
+    };
   }
   if (Object.entries(tokenMeta).length === 0) {
     const response = await fetch("https://prices.intear.tech/tokens")
       .then((response) => response.json())
-      .then((data) => Object.fromEntries(Object.entries(data).map(([tokenId, data]: [string, any]) => [tokenId, (data as TokenData).metadata])));
+      .then((data) =>
+        Object.fromEntries(
+          Object.entries(data).map(([tokenId, data]: [string, any]) => [
+            tokenId,
+            (data as TokenData).metadata,
+          ])
+        )
+      );
     Object.assign(tokenMeta, response);
   }
-  return tokenMeta[tokenId] ?? {
-    name: "Unknown",
-    symbol: "UNKNOWN",
-    decimals: 0,
-  }
+  return (
+    tokenMeta[tokenId] ?? {
+      name: "Unknown",
+      symbol: "UNKNOWN",
+      decimals: 0,
+    }
+  );
 }
 
-export async function getFullTokenMetadata(tokenId: string): Promise<TokenMetadata & {
-  icon: string
-}> {
+export async function getFullTokenMetadata(tokenId: string): Promise<
+  TokenMetadata & {
+    icon: string;
+  }
+> {
   const near = await getNear();
   const result = await near.connection.provider.query({
     request_type: "call_function",
@@ -60,20 +76,20 @@ export async function getFullTokenMetadata(tokenId: string): Promise<TokenMetada
     method_name: "ft_metadata",
     args_base64: btoa(JSON.stringify({})),
     finality: "final",
-  })
+  });
   const metadata = JSON.parse(Buffer.from((result as any).result).toString());
-  return metadata
+  return metadata;
 }
 
 const jsonProviders = [
   new JsonRpcProvider({
-    url: 'https://rpc.shitzuapes.xyz',
+    url: "https://rpc.shitzuapes.xyz",
   }),
   new JsonRpcProvider({
-    url: 'https://rpc.mainnet.near.org',
+    url: "https://rpc.mainnet.near.org",
   }),
   new JsonRpcProvider({
-    url: 'https://near.lava.build',
+    url: "https://near.lava.build",
   }),
 ];
 export const nearProvider = new FailoverRpcProvider(jsonProviders);
@@ -82,12 +98,18 @@ export async function getNear() {
   let keyStore = new keyStores.InMemoryKeyStore();
   if (localStorage.getItem("connectedAccount") !== null) {
     const account = JSON.parse(localStorage.getItem("connectedAccount")!);
-    keyStore.setKey("mainnet", account.accountId, KeyPair.fromString(`ed25519:${account.privateKey}`));
+    if (account !== null) {
+      keyStore.setKey(
+        "mainnet",
+        account.accountId,
+        KeyPair.fromString(`ed25519:${account.privateKey}`)
+      );
+    }
   }
   return await connect({
-    networkId: 'mainnet',
+    networkId: "mainnet",
     provider: nearProvider,
-    nodeUrl: 'https://rpc.mainnet.near.org',
+    nodeUrl: "https://rpc.mainnet.near.org",
     keyStore,
-  })
+  });
 }

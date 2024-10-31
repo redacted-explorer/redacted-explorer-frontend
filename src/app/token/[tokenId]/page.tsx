@@ -24,11 +24,12 @@ export default function Page({ params }: { params: { tokenId: string } }) {
               <TradingViewChart symbol={params.tokenId} />
             </div>
           </div>
-          <div></div>
           <div className="flex justify-end items-end ">
             <TokenOverview tokenId={params.tokenId} />
           </div>
-          <TokenTradeWidget tokenId={params.tokenId} />
+          <div className="flex justify-end items-end">
+            <TokenTradeWidget tokenId={params.tokenId} />
+          </div>
         </div>
 
         <div className="mt-8 mb-4 flex flex-wrap gap-2 w-full">
