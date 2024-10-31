@@ -1,3 +1,4 @@
+import CopyButton from "../ui/CopyButton";
 import TokenInfoCard from "./TokenInfoCard";
 
 type PriceChanges = {
@@ -9,6 +10,7 @@ type PriceChanges = {
 };
 
 export default function TokenInfo({
+  accountId,
   name,
   ticker,
   priceChanges,
@@ -16,6 +18,7 @@ export default function TokenInfo({
   currentPriceNear,
   circulatingSupply,
 }: {
+  accountId: string;
   name: string;
   ticker: string;
   priceChanges: PriceChanges;
@@ -28,8 +31,9 @@ export default function TokenInfo({
   return (
     <div className="flex flex-col justify-center">
       <div className="grid grid-cols-2 gap-2 w-96">
-        <div className="col-span-2 text-3xl py-4 text-center font-bold border-1 border-zinc-400 text-zinc-200 rounded-lg ">
-          ${ticker}
+        <div className="col-span-2 text-3xl py-4 text-center font-bold border-1 border-zinc-400 text-zinc-200 rounded-lg flex flex-row justify-center items-center">
+          {ticker}
+          <CopyButton text={accountId} />
         </div>
         <TokenInfoCard label="PRICE USD" value={`${priceUsdRounded}$`} />
         <TokenInfoCard

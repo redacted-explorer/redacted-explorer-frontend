@@ -70,7 +70,7 @@ export default function TokenOverview({ tokenId }: { tokenId: string }) {
         );
 
         const priceChanges = prices.map((price) => {
-          return Number(price) / Number(currentPrice);
+          return Number(currentPrice) / Number(price);
         });
 
         const priceChangePercentages = priceChanges.map(
@@ -154,6 +154,7 @@ export default function TokenOverview({ tokenId }: { tokenId: string }) {
   return (
     <div className="my-2">
       <TokenInfo
+        accountId={tokenId}
         name={tokenData.name}
         ticker={tokenData.symbol}
         priceChanges={{
