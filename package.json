@@ -20,6 +20,7 @@
     "@react-stately/data": "^3.11.7",
     "chart.js": "^4.4.6",
     "framer-motion": "^11.7.0",
+    "near-api-js": "^5.0.1",
     "next": "14.2.13",
     "react": "^18",
     "react-chartjs-2": "^5.2.0",

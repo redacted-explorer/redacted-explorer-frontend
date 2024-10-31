@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Input } from "@nextui-org/react";
-import { TokenData } from "@/utils";
+import { getNear, TokenData } from "@/utils";
 import Link from "next/link";
 
 type SearchResult = {
@@ -29,7 +28,6 @@ export default function SearchField() {
       const results = accounts.filter((account) =>
         account.startsWith(query.toLowerCase())
       );
-      console.log(results);
       if (results.includes(query)) {
         return [
           {
@@ -41,13 +39,10 @@ export default function SearchField() {
             .map((account) => ({ id: account, display: account })),
         ];
       } else {
-        const accountExists = await fetch(
-          `https://api.fastnear.com/v1/account/${query}/full`
-        )
-          .then((res) => res.json())
-          .then((data) => {
-            return typeof data !== "string" && data.state !== null;
-          });
+        const NEAR = await getNear();
+        const account = await NEAR.account(query).catch(() => null);
+        const keys = await account?.getAccessKeys().then((data) => [...data.keys()]).catch(() => null) ?? [];
+        const accountExists = keys.length > 0;
         if (accountExists) {
           return [
             {
@@ -61,7 +56,6 @@ export default function SearchField() {
         }
       }
     } catch (e) {
-      console.log("Error searching for account\n", e);
       return [];
     }
   }
@@ -113,9 +107,10 @@ export default function SearchField() {
       setLoading(false);
       return;
     }
-    const accounts = await searchAccounts(i);
-    const tokens = await searchTokens(i);
-    const transactions = await searchTransactions(i);
+    let accountsPromise = searchAccounts(i);
+    let tokensPromise = searchTokens(i);
+    let transactionsPromise = searchTransactions(i);
+    let [accounts, tokens, transactions] = await Promise.all([accountsPromise, tokensPromise, transactionsPromise]);
     setResults({
       accounts: accounts,
       tokens: tokens,

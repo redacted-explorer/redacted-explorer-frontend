@@ -1,3 +1,6 @@
+import { connect } from "near-api-js";
+import { FailoverRpcProvider, JsonRpcProvider } from "near-api-js/lib/providers";
+
 export function truncateString(str: string, length: number) {
   if (str.length - 3 > length) {
     return str.substring(0, length) + "…";
@@ -45,4 +48,25 @@ export async function getTokenMetadata(tokenId: string): Promise<TokenMetadata> 
     symbol: "UNKNOWN",
     decimals: 0,
   }
+}
+
+const jsonProviders = [
+  new JsonRpcProvider({
+    url: 'https://rpc.shitzuapes.xyz',
+  }),
+  new JsonRpcProvider({
+    url: 'https://rpc.mainnet.near.org',
+  }),
+  new JsonRpcProvider({
+    url: 'https://near.lava.build',
+  }),
+];
+export const nearProvider = new FailoverRpcProvider(jsonProviders);
+
+export async function getNear() {
+  return await connect({
+    networkId: 'mainnet',
+    provider: nearProvider,
+    nodeUrl: 'https://rpc.mainnet.near.org',
+  })
 }
