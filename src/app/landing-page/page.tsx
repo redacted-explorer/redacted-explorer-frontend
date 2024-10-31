@@ -4,7 +4,7 @@ import SearchBar from "@/components/ui/SearchBar";
 export default function Page() {
   return (
     <div className="">
-      <div className="text-5xl text-zinc-400 font-bold mt-32">
+      <div className="text-5xl text-zinc-400 font-bold mt-24">
         For devs and degens alike
       </div>
       <div className="text-xl mt-4 font-semibold text-zinc-500">

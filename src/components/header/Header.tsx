@@ -9,7 +9,7 @@ export default function Header() {
   const currentPath = usePathname();
 
   return (
-    <div className="py-4 pt-8">
+    <div className="pt-8 pb-16">
       <div className="flex justify-between items-center">
         <div>
           <Link href="/">

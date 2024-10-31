@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@nextui-org/button";
 import { TokenData } from "@/utils";
+import { formatNumber } from "chart.js/helpers";
+import TokenInfo from "./TokenInfo";
 
 const FIVE_MINUTES = 1000 * 60 * 5;
 const ONE_HOUR = 1000 * 60 * 60;
@@ -15,16 +17,13 @@ export type PriceData = {
   token: string;
 };
 
-export default function TokenOverview({
-  tokenId,
-}: {
-  tokenId: string;
-}) {
+export default function TokenOverview({ tokenId }: { tokenId: string }) {
   const [tokenData, setTokenData] = useState({
     name: "loading",
     symbol: "loading",
     priceNear: "loading",
     priceUsd: "loading",
+    circulatingSupply: "loading",
   });
   const [priceChanges, setPriceChanges] = useState({
     priceChange5m: "loading",
@@ -129,12 +128,16 @@ export default function TokenOverview({
           nearPrice !== undefined
             ? (Number(priceUsd) / nearPrice).toString()
             : "No Data";
+        const circulatingSupply =
+          Number(tokenInfo.circulating_supply) *
+          10 ** (-1 * Number(tokenInfo.metadata.decimals));
         setTokenData((prev) => ({
           ...prev,
           name,
           symbol,
           priceUsd,
           priceNear,
+          circulatingSupply: circulatingSupply.toFixed(0),
         }));
       }
     };
@@ -150,17 +153,20 @@ export default function TokenOverview({
 
   return (
     <div className="my-2">
-      <div>{tokenId}</div>
-      <div>Token Name: {tokenData.name}</div>
-      <div>Token Ticker: {tokenData.symbol}</div>
-      <div>Current Price (NEAR): {tokenData.priceNear}</div>
-      <div>Current Price (USD): {tokenData.priceUsd}</div>
-      <h3>Price Change</h3>
-      <div>5min - {priceChanges.priceChange5m}</div>
-      <div>1h - {priceChanges.priceChange1h}</div>
-      <div>6h - {priceChanges.priceChange6h}</div>
-      <div>24h - {priceChanges.priceChange24h}</div>
-      <div>7d - {priceChanges.priceChange7d}</div>
+      <TokenInfo
+        name={tokenData.name}
+        ticker={tokenData.symbol}
+        priceChanges={{
+          fiveMinutes: priceChanges.priceChange5m,
+          oneHour: priceChanges.priceChange1h,
+          sixHours: priceChanges.priceChange6h,
+          twentyFourHours: priceChanges.priceChange24h,
+          sevenDays: priceChanges.priceChange7d,
+        }}
+        currentPriceUsd={tokenData.priceUsd}
+        currentPriceNear={tokenData.priceNear}
+        circulatingSupply={tokenData.circulatingSupply}
+      />
     </div>
   );
 }

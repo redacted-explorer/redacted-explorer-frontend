@@ -10,7 +10,7 @@ export default function Page({ params }: { params: { accountId: string } }) {
   const [activeTab, setActiveTab] = useState(tabs[0]);
   return (
     <div className="flex flex-col justify-center items-center">
-      <div className="w-[80%]">
+      <div className="w-full">
         <div className="mt-8 mb-4 flex flex-wrap gap-2">
           {tabs.map((tab) => (
             <Pill
