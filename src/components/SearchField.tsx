@@ -100,6 +100,7 @@ export default function SearchField({ className }: { className?: string }) {
 
   async function search(i: string) {
     setLoading(true);
+    console.log(i);
     setInput(i);
     if (i.length === 0) {
       setResults({
@@ -119,9 +120,9 @@ export default function SearchField({ className }: { className?: string }) {
       transactionsPromise,
     ]);
     setResults({
-      accounts: accounts,
-      tokens: tokens,
-      transactions: transactions,
+      accounts,
+      tokens,
+      transactions,
     });
     setLoading(false);
   }
