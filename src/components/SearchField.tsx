@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { getNear, TokenData } from "@/utils";
 import Link from "next/link";
 
@@ -7,11 +7,10 @@ type SearchResult = {
   display: React.ReactNode;
 };
 
-export default function SearchField() {
+export default function SearchField({ className }: { className?: string }) {
   const [input, setInput] = useState("");
   const [focus, setFocus] = useState(false);
   const [loading, setLoading] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
   const [results, setResults] = useState<{
     accounts: SearchResult[];
     tokens: SearchResult[];
@@ -41,7 +40,11 @@ export default function SearchField() {
       } else {
         const NEAR = await getNear();
         const account = await NEAR.account(query).catch(() => null);
-        const keys = await account?.getAccessKeys().then((data) => [...data.keys()]).catch(() => null) ?? [];
+        const keys =
+          (await account
+            ?.getAccessKeys()
+            .then((data) => [...data.keys()])
+            .catch(() => null)) ?? [];
         const accountExists = keys.length > 0;
         if (accountExists) {
           return [
@@ -110,7 +113,11 @@ export default function SearchField() {
     let accountsPromise = searchAccounts(i);
     let tokensPromise = searchTokens(i);
     let transactionsPromise = searchTransactions(i);
-    let [accounts, tokens, transactions] = await Promise.all([accountsPromise, tokensPromise, transactionsPromise]);
+    let [accounts, tokens, transactions] = await Promise.all([
+      accountsPromise,
+      tokensPromise,
+      transactionsPromise,
+    ]);
     setResults({
       accounts: accounts,
       tokens: tokens,
@@ -120,92 +127,90 @@ export default function SearchField() {
   }
 
   return (
-    <div className="flex flex-col gap-2 items-center" ref={ref}>
-      <div className="flex gap-2 justify-center items-center">
-        <div className="relative">
-          <input
-            type="input"
-            placeholder="Search"
-            className="h-full text-white rounded-lg px-2 py-2 w-[30rem] bg-gray-900 "
-            value={input}
-            onInput={(e) => {
-              search(e.currentTarget.value);
-            }}
-            onFocus={() => setFocus(true)}
-            onBlur={() => setFocus(true)}
-          ></input>
+    <div className="relative">
+      <input
+        type="input"
+        placeholder="Search"
+        className={
+          className
+            ? className
+            : "h-full text-white rounded-lg px-2 py-2 w-[30rem] bg-zinc-800"
+        }
+        value={input}
+        onInput={(e) => {
+          search(e.currentTarget.value);
+        }}
+        onFocus={() => setFocus(true)}
+        onBlur={() => setFocus(true)}
+      ></input>
 
-          {focus &&
-            (results.accounts.length !== 0 ||
-              results.tokens.length !== 0 ||
-              results.transactions.length !== 0) && (
-              <div className="flex gap-2 flex-col absolute py-3 left-0 mt-1 w-full text-white rounded-md shadow-lg bg-gray-900 z-50">
-                {results.accounts.length !== 0 && (
-                  <div className="flex flex-col gap-1">
-                    <div className="bg-gray-600 rounded px-3 py-2 font-semibold">
-                      Accounts
-                    </div>
-                    {results.accounts.map((account) => (
-                      <Link href={`/account/${account.id}`}>
-                        <div
-                          className="px-3 py-2 rounded hover:bg-gray-600 text-sm"
-                          key={account.id}
-                        >
-                          {account.display}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                {results.tokens.length !== 0 && (
-                  <div className="flex flex-col gap-1">
-                    <div className="bg-gray-600 rounded px-3 py-2 font-semibold">
-                      Tokens
-                    </div>
-                    {results.tokens.map((token) => (
-                      <Link href={`/token/${token.id}`}>
-                        <div
-                          className="px-3 py-2 rounded hover:bg-gray-600 text-sm"
-                          key={token.id}
-                        >
-                          {token.display}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                {results.transactions.length !== 0 && (
-                  <div className="flex flex-col gap-1">
-                    <div className="bg-gray-600 rounded px-3 py-2 font-semibold">
-                      Transactions
-                    </div>
-                    {results.transactions.map((transaction) => (
-                      <Link href={`/transaction/${transaction.id}`}>
-                        <div
-                          className="px-3 py-2 rounded hover:bg-gray-600 text-sm"
-                          key={transaction.id}
-                        >
-                          {transaction.display}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          {focus &&
-            input !== "" &&
-            !(results.accounts || results.transactions) && (
-              <div className="flex gap-2 flex-col absolute py-3 left-0 mt-1 w-full text-white rounded-md shadow-lg bg-slate-700 z-50">
-                <div className="flex flex-col gap-1">
-                  <div className="bg-slate-500 rounded px-3 py-2">
-                    {loading ? "Loading..." : "No Results"}
-                  </div>
+      {focus &&
+        (results.accounts.length !== 0 ||
+          results.tokens.length !== 0 ||
+          results.transactions.length !== 0) && (
+          <div className="flex gap-2 flex-col absolute py-3 left-0 mt-1 w-full text-white rounded-md shadow-lg bg-zinc-800 z-50">
+            {results.accounts.length !== 0 && (
+              <div className="flex flex-col gap-1">
+                <div className="bg-zinc-600 rounded px-3 py-2 font-semibold">
+                  Accounts
                 </div>
+                {results.accounts.map((account) => (
+                  <Link href={`/account/${account.id}`}>
+                    <div
+                      className="px-3 py-2 rounded hover:bg-zinc-700 text-sm"
+                      key={account.id}
+                    >
+                      {account.display}
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
+            {results.tokens.length !== 0 && (
+              <div className="flex flex-col gap-1">
+                <div className="bg-zinc-600 rounded px-3 py-2 font-semibold">
+                  Tokens
+                </div>
+                {results.tokens.map((token) => (
+                  <Link href={`/token/${token.id}`}>
+                    <div
+                      className="px-3 py-2 rounded hover:bg-zinc-700 text-sm"
+                      key={token.id}
+                    >
+                      {token.display}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+            {results.transactions.length !== 0 && (
+              <div className="flex flex-col gap-1">
+                <div className="bg-zinc-600 rounded px-3 py-2 font-semibold">
+                  Transactions
+                </div>
+                {results.transactions.map((transaction) => (
+                  <Link href={`/transaction/${transaction.id}`}>
+                    <div
+                      className="px-3 py-2 rounded hover:bg-zinc-700 text-sm"
+                      key={transaction.id}
+                    >
+                      {transaction.display}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      {focus && input !== "" && !(results.accounts || results.transactions) && (
+        <div className="flex gap-2 flex-col absolute py-3 left-0 mt-1 w-full text-white rounded-md shadow-lg bg-slate-700 z-50">
+          <div className="flex flex-col gap-1">
+            <div className="bg-slate-500 rounded px-3 py-2">
+              {loading ? "Loading..." : "No Results"}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -16,7 +16,7 @@ export default function Page({ params }: { params: { tokenId: string } }) {
   const [activeTab, setActiveTab] = useState(tabs[0]);
   return (
     <div className="flex justify-center items-center ">
-      <div className="flex flex-col justify-center items-stretch w-[80%]">
+      <div className="flex flex-col justify-center items-stretch w-full">
         <TokenOverview tokenId={params.tokenId} />
         <div className="flex justify-center">
           <TradingViewChart symbol={params.tokenId} />
