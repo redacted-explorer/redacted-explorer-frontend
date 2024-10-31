@@ -7,7 +7,7 @@ export default function Home() {
   return (
     <div className="grid grid-rows-7 grid-flow-col gap-8 p-4 h-[100vh]">
       <div className="row-span-3 h-full w-full bg-white">
-        <iframe src="https://tps.intear.tech/" className="w-full h-full" />
+        <iframe src="https://tps.intear.tech/" className="w-full h-full overflow-hidden" scrolling="no" />
       </div>
       <div className="row-span-4">
         <BlockInfoTable entriesPerPage={6} />
