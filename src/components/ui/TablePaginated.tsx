@@ -10,6 +10,7 @@ import {
   TableCell,
 } from "@nextui-org/table";
 import React, { useEffect, useState } from "react";
+import useWebSocket from "react-use-websocket";
 
 interface Event {
 }
@@ -28,6 +29,7 @@ type TableInfo<E extends Event> = {
   customFilter: EventFilter;
   columns: { [columnId: string]: Column<E> };
   entriesPerPage?: number;
+  realtimeUpdates?: boolean;
 }
 
 type Column<E extends Event> = {
@@ -41,11 +43,12 @@ export default function TablePaginated<E extends Event>({
   customFilter,
   columns,
   entriesPerPage = 20,
+  realtimeUpdates = true,
 }: TableInfo<E>) {
-  const [indexOfFirstEntryOnPage, setIndexFirstEntry] = useState(0);
   const [isFirstPage, setIsFirstPage] = useState(true);
   const [isLastPage, setIsLastPage] = useState(true);
   const [tableRows, setTableRows] = useState<EventInfo<E>[]>([]);
+  const [cachedTableRows, setCachedTableRows] = useState<EventInfo<E>[]>([]);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
@@ -80,12 +83,25 @@ export default function TablePaginated<E extends Event>({
     }
     setIsLastPage(entries.length < entriesPerPage);
     setTableRows(entries);
+    setCachedTableRows([...entries]);
     setInitialized(true);
   }
 
   async function nextPage() {
     console.log("next");
     if (tableRows.length === 0) return;
+
+    setIsFirstPage(false);
+    let lastIdOnCurrentPage = getIdLastEntry();
+    let indexOfLastEntryOnCurrentPage = cachedTableRows.findIndex((row) => row.id === lastIdOnCurrentPage);
+    if (indexOfLastEntryOnCurrentPage !== -1 && lastIdOnCurrentPage < 0) {
+      const entriesOnThisPage = cachedTableRows.slice(indexOfLastEntryOnCurrentPage, indexOfLastEntryOnCurrentPage + entriesPerPage);
+      setTableRows(entriesOnThisPage);
+      if (indexOfLastEntryOnCurrentPage + entriesPerPage === cachedTableRows.length) {
+        setIsLastPage(true);
+      }
+      return;
+    }
 
     const query = new URLSearchParams();
     for (const [key, value] of Object.entries(baseFilter)) {
@@ -105,8 +121,7 @@ export default function TablePaginated<E extends Event>({
       setIsLastPage(true);
       if (entries.length === 0) return;
     }
-    setIndexFirstEntry((prev) => prev + entriesPerPage);
-    setIsFirstPage(false);
+    setCachedTableRows([...cachedTableRows, ...entries]);
     setTableRows(entries);
   }
 
@@ -114,13 +129,20 @@ export default function TablePaginated<E extends Event>({
     if (tableRows.length === 0) return;
 
     let afterId = getIdFirstEntry();
-    if (indexOfFirstEntryOnPage <= entriesPerPage) {
-      afterId = tableRows[entriesPerPage - indexOfFirstEntryOnPage].id;
-      setIndexFirstEntry(0);
-      setIsFirstPage(true);
-    } else {
-      setIndexFirstEntry((prev) => prev - entriesPerPage);
+    let indexOfFirstEntryOnCurrentPage = cachedTableRows.findIndex((row) => row.id === afterId);
+    if (indexOfFirstEntryOnCurrentPage !== -1) {
+      indexOfFirstEntryOnCurrentPage = Math.max(entriesPerPage, indexOfFirstEntryOnCurrentPage);
+      const entriesOnThisPage = cachedTableRows.slice(indexOfFirstEntryOnCurrentPage - entriesPerPage, indexOfFirstEntryOnCurrentPage);
+      setTableRows(entriesOnThisPage);
+      if (indexOfFirstEntryOnCurrentPage === entriesPerPage) {
+        setIsFirstPage(true);
+      }
+      return;
     }
+
+    // This should never happen but handle it anyway
+    console.error("Could not find the previous page in the cached table rows");
+
     const query = new URLSearchParams();
     for (const [key, value] of Object.entries(baseFilter)) {
       query.append(key, value);
@@ -137,6 +159,41 @@ export default function TablePaginated<E extends Event>({
       .then((response) => response.reverse())
     setIsLastPage(false);
     setTableRows(entries);
+  }
+
+  if (realtimeUpdates) {
+    const ws = useWebSocket(`wss://ws-events.intear.tech/events/${eventName}`, {
+      onOpen: () => {
+        console.log("opened");
+      },
+      onMessage: (event) => {
+        let eventData = JSON.parse(event.data);
+        let firstId = cachedTableRows[0]?.id ?? 0;
+        let id;
+        if (firstId >= 0) {
+          id = -1;
+        } else {
+          id = firstId - 1;
+        }
+        cachedTableRows.unshift({ id, event: eventData });
+        setCachedTableRows(cachedTableRows);
+        if (isFirstPage) {
+          tableRows.unshift({ id, event: eventData });
+          tableRows.pop();
+          setTableRows(tableRows);
+        }
+      },
+      reconnectAttempts: 10,
+      reconnectInterval: 1000,
+    });
+
+    useEffect(() => {
+      if (initialized) return;
+      const filter = {};
+      Object.assign(filter, baseFilter);
+      Object.assign(filter, customFilter);
+      ws.sendMessage(JSON.stringify(filter));
+    }, [initialized]);
   }
 
   return (

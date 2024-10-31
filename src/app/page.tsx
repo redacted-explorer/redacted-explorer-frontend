@@ -10,7 +10,7 @@ export default function Home() {
         <iframe src="https://tps.intear.tech/" className="w-full h-full" />
       </div>
       <div className="row-span-4">
-        <BlockInfoTable entriesPerPage={8} />
+        <BlockInfoTable entriesPerPage={6} />
       </div>
       <div className="row-span-3">
         <AllTokensTradeHistoryTable />

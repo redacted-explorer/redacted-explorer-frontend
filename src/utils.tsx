@@ -39,9 +39,7 @@ export async function getTokenMetadata(tokenId: string): Promise<TokenMetadata> 
       .then((response) => response.json())
       .then((data) => Object.fromEntries(Object.entries(data).map(([tokenId, data]: [string, any]) => [tokenId, (data as TokenData).metadata])));
     Object.assign(tokenMeta, response);
-    console.log(tokenMeta)
   }
-  console.log(tokenId);
   return tokenMeta[tokenId] ?? {
     name: "Unknown",
     symbol: "UNKNOWN",
