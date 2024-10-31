@@ -14,10 +14,11 @@ export default function ConnectedAccount() {
     const solana = useWallet();
     const [connectedAccount, setConnectedAccount, isModalOpen, setModalOpen] = React.useContext(WalletContext);
     const [isLoading, setIsLoading] = useState(false);
+    console.log(solana, connectedAccount)
 
     function logInWithSolana() {
         const keyPair = KeyPair.fromRandom("ED25519");
-        const name = solana.publicKey!.toString().slice(0, 48).toLowerCase();
+        const name = solana.publicKey!.toString().slice(0, 46).toLowerCase();
         const recoveryKey = solana.publicKey!.toBuffer();
         solana.signMessage!(Buffer.from(`I want to log in to [REDACTED] Explorer and add key ${keyPair.getPublicKey().toString()} for quick trading without confirmation in wallet`)).then((signature) => {
             console.log(signature);
@@ -59,12 +60,12 @@ export default function ConnectedAccount() {
             </button>
             {isModalOpen && (
                 <div className="fixed inset-0 z-10 flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-black opacity-75 transition-opacity" aria-hidden="true"></div>
+                    <div className="absolute inset-0 bg-black opacity-75 transition-opacity" aria-hidden="true" onClick={() => setModalOpen(false)}></div>
                     <div className="bg-white rounded-lg shadow-lg overflow-hidden z-50 min-w-[300px] min-h-[350px] max-h-[80%] max-w-xl max-h-xl">
                         <div className="bg-near-green-200 text-black w-full min-h-[350px] h-full p-8">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-2xl font-bold">{connectedAccount === null ? "Connect Wallet" : "Connected Account"}</h2>
-                                <button className="text-black hover:text-near-green-200 focus:outline-none" onClick={() => setModalOpen(!isModalOpen)}>
+                                <button className="text-black hover:text-near-green-700 focus:outline-none" onClick={() => setModalOpen(!isModalOpen)}>
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
                             </div>
@@ -72,10 +73,10 @@ export default function ConnectedAccount() {
                                 <WalletMultiButton>Solana</WalletMultiButton>
                             </div>}
                             {connectedAccount === null && !solana.connected && connectedAccount === null && <div className="mt-4">
-                                <WalletMultiButton>Ethereum</WalletMultiButton>
+                                <button className="bg-[#512da8] text-white flex items-center font-['DM_Sans'] text-[16px] font-bold h-[48px] leading-[48px] px-[24px] border-r-[4px]">Ethereum</button>
                             </div>}
                             {connectedAccount === null && !solana.connected && connectedAccount === null && <div className="mt-4">
-                                <WalletMultiButton>NEAR</WalletMultiButton>
+                                <button className="bg-[#512da8] text-white flex items-center font-['DM_Sans'] text-[16px] font-bold h-[48px] leading-[48px] px-[24px] border-r-[4px]">NEAR</button>
                             </div>}
                             {solana.connected && connectedAccount === null && !isLoading && (
                                 <div className="mt-4">
