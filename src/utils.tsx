@@ -1,4 +1,4 @@
-import { connect } from "near-api-js";
+import { connect, KeyPair, keyStores } from "near-api-js";
 import { FailoverRpcProvider, JsonRpcProvider } from "near-api-js/lib/providers";
 
 export function truncateString(str: string, length: number) {
@@ -50,6 +50,21 @@ export async function getTokenMetadata(tokenId: string): Promise<TokenMetadata> 
   }
 }
 
+export async function getFullTokenMetadata(tokenId: string): Promise<TokenMetadata & {
+  icon: string
+}> {
+  const near = await getNear();
+  const result = await near.connection.provider.query({
+    request_type: "call_function",
+    account_id: tokenId,
+    method_name: "ft_metadata",
+    args_base64: btoa(JSON.stringify({})),
+    finality: "final",
+  })
+  const metadata = JSON.parse(Buffer.from((result as any).result).toString());
+  return metadata
+}
+
 const jsonProviders = [
   new JsonRpcProvider({
     url: 'https://rpc.shitzuapes.xyz',
@@ -64,9 +79,15 @@ const jsonProviders = [
 export const nearProvider = new FailoverRpcProvider(jsonProviders);
 
 export async function getNear() {
+  let keyStore = new keyStores.InMemoryKeyStore();
+  if (localStorage.getItem("connectedAccount") !== null) {
+    const account = JSON.parse(localStorage.getItem("connectedAccount")!);
+    keyStore.setKey("mainnet", account.accountId, KeyPair.fromString(`ed25519:${account.privateKey}`));
+  }
   return await connect({
     networkId: 'mainnet',
     provider: nearProvider,
     nodeUrl: 'https://rpc.mainnet.near.org',
+    keyStore,
   })
 }
