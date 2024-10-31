@@ -1,6 +1,5 @@
 "use client";
-import SearchField from "@/components/SearchField";
-import RubensSearchBar from "@/components/ui/RubensSearchBar";
+import SearchBar from "@/components/ui/SearchBar";
 
 export default function Page() {
   return (
@@ -12,14 +11,14 @@ export default function Page() {
         Because NEAR is for all of us
       </div>
       <div className="mt-24">
-        <SearchField className="w-full text-white rounded-lg px-4 py-3 text-xl bg-zinc-800" />
-      </div>
-      <div>
-        <RubensSearchBar />
+        <SearchBar />
       </div>
       <div className="grid mt-32 gap-6 grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <div className="border border-zinc-600 h-48 bg-zinc-800 rounded-lg"></div>
+          <div
+            key={1}
+            className="border border-zinc-600 h-48 bg-zinc-800 rounded-lg"
+          ></div>
         ))}
       </div>
     </div>

@@ -2,21 +2,11 @@
 
 import Link from "next/link";
 import ExplorerLogo from "@/ui/explorer-logo";
-import { RiMenu3Fill } from "react-icons/ri";
-import { useState } from "react";
-import HeaderMenu from "./HeaderMenu";
-import HeaderMenuItem from "./HeaderMenuItem";
-import HeaderMenuDropdown from "./HeaderMenuDropdown";
-import SearchField from "../SearchField";
 import { usePathname } from "next/navigation";
+import SearchBar from "../ui/SearchBar";
 
 export default function Header() {
-  const [hidden, setHidden] = useState(true);
   const currentPath = usePathname();
-
-  function toggleHidden() {
-    setHidden((prev) => !prev);
-  }
 
   return (
     <div className="py-4 pt-8">
@@ -27,8 +17,8 @@ export default function Header() {
           </Link>
         </div>
         {currentPath !== "/landing-page" && (
-          <div>
-            <SearchField />
+          <div className="min-w-96">
+            <SearchBar className="w-full rounded-lg border-0 bg-zinc-800 py-2 pl-3 pr-6 text-zinc-200 shadow-sm ring-1 ring-inset ring-zinc-600 focus:ring-2 focus:ring-inset focus:ring-zinc-600 sm:text-sm" />
           </div>
         )}
       </div>

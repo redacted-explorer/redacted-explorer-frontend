@@ -18,7 +18,13 @@ type Entry = {
   display: string;
 };
 
-export default function RubensSearchBar() {
+export default function SearchBar({
+  className,
+  landingPage,
+}: {
+  className?: string;
+  landingPage?: boolean;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
@@ -120,7 +126,7 @@ export default function RubensSearchBar() {
   }
 
   useEffect(() => {
-    if (query.length > 2) {
+    if (query.length > 0) {
       searchTokens(query).then((tokens) => {
         setTokens(tokens);
       });
@@ -159,21 +165,27 @@ export default function RubensSearchBar() {
     >
       <div className="relative mt-2">
         <ComboboxInput
-          className="w-full rounded-md border-0 bg-zinc-800  py-1.5 pl-3 pr-12 text-zinc-200 shadow-sm ring-1 ring-inset ring-zinc-600 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+          className={
+            className
+              ? className
+              : "w-full rounded-lg border-0 bg-zinc-800  py-3 pl-4 pr-12 text-zinc-200 shadow-sm ring-1 ring-inset ring-zinc-600 focus:ring-2 focus:ring-inset focus:ring-zinc-600 sm:text-xl"
+          }
           onChange={(event) => setQuery(event.target.value)}
           onBlur={() => setQuery("")}
           displayValue={(person: Entry) => person?.id ?? ""}
-          placeholder="Search for accounts, tokens and transactions"
+          placeholder={
+            landingPage ? "Search for accounts, tokens and transactions" : ""
+          }
         />
         <ComboboxButton className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none">
           <MagnifyingGlassIcon
-            className="h-5 w-5 text-gray-400"
+            className="h-5 w-5 text-gray-400 mr-2"
             aria-hidden="true"
           />
         </ComboboxButton>
 
         {accounts.length > 0 || tokens.length > 0 || transactions.length > 0 ? (
-          <ComboboxOptions className="absolute z-10 mt-1 max-h-44 w-full overflow-auto rounded-md bg-zinc-800 text-zinc-200 pb-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+          <ComboboxOptions className="absolute z-10 mt-1 max-h-96 w-full border-2 border-zinc-500 overflow-auto rounded-md bg-zinc-800 text-zinc-200 pb-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
             <div className="bg-zinc-900 py-2 pl-3 text-xs font-medium">
               Accounts
             </div>
@@ -187,7 +199,7 @@ export default function RubensSearchBar() {
               </ComboboxOption>
             ))}
             {accounts.length === 0 ? (
-              <div className="text-zinc-700 py-2 pl-3 text-xs font-medium">
+              <div className="text-zinc-600 py-2 pl-3 text-xs font-medium">
                 No results
               </div>
             ) : (
@@ -206,7 +218,7 @@ export default function RubensSearchBar() {
               </ComboboxOption>
             ))}
             {tokens.length === 0 ? (
-              <div className="text-zinc-700 py-2 pl-3 text-xs font-medium">
+              <div className="text-zinc-600 py-2 pl-3 text-xs font-medium">
                 No results
               </div>
             ) : (
@@ -225,7 +237,7 @@ export default function RubensSearchBar() {
               </ComboboxOption>
             ))}
             {transactions.length === 0 ? (
-              <div className="text-zinc-700 py-2 pl-3 text-xs font-medium">
+              <div className="text-zinc-600 py-2 pl-3 text-xs font-medium">
                 {query.length > 5 ? "No results" : "Type more characters ..."}
               </div>
             ) : (
