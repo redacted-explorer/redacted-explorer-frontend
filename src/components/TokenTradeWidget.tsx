@@ -36,13 +36,14 @@ export default function TokenTradeWidget({ tokenId }: { tokenId: string }) {
     );
     const near = await getNear();
     const account = await near.account(connectedAccount!.accountId);
+    const totalGas = transactions
+      .flatMap((tx) => tx.functionCalls)
+      .reduce((sum, call) => sum + BigInt(call.gas ?? 0) + 10_000_000_000_000n, 0n);
     const outcome = await account.functionCall({
       contractId: connectedAccount!.accountId,
       methodName: "relay_transactions",
       args: { transactions: txs },
-      gas: transactions
-        .flatMap((tx) => tx.functionCalls)
-        .reduce((sum, call) => sum + BigInt(call.gas ?? 0), 0n),
+      gas: totalGas > 300_000_000_000_000n ? 300_000_000_000_000n : totalGas,
     });
     console.log(outcome);
   }
