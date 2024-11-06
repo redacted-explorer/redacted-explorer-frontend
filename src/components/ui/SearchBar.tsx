@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 
 type Entry = {
   id: string;
-  kind: "account" | "token" | "transaction";
+  kind: "account" | "token" | "tx";
   display: string;
 };
 
@@ -109,6 +109,7 @@ export default function SearchBar({
 
   async function searchTransactions(query: string): Promise<Entry[]> {
     try {
+      // TODO use RPC instead of events API
       return await fetch(
         `https://events.intear.tech/query/tx_transaction?transaction_id=${query}&pagination_by=Newest&limit=1`,
         { method: "GET" }
@@ -116,7 +117,7 @@ export default function SearchBar({
         .then((res) => res.json())
         .then((data) => {
           if (data !== null)
-            return [{ id: query, display: query, kind: "transaction" }];
+            return [{ id: query, display: query, kind: "tx" }];
           return [];
         });
     } catch (e) {
@@ -189,13 +190,13 @@ export default function SearchBar({
             <div className="bg-zinc-900 py-2 pl-3 text-xs font-medium">
               Accounts
             </div>
-            {accounts.map((person) => (
+            {accounts.map((account) => (
               <ComboboxOption
-                key={person.id}
-                value={person}
+                key={account.id}
+                value={account}
                 className="group relative cursor-default select-none py-2 pl-3 pr-9 text-zinc-200 data-[focus]:bg-indigo-600 data-[focus]:text-white"
               >
-                {person.display}
+                {account.display}
               </ComboboxOption>
             ))}
             {accounts.length === 0 ? (
@@ -208,13 +209,13 @@ export default function SearchBar({
             <div className="bg-zinc-900 py-2 pl-3 text-xs font-medium">
               Tokens
             </div>
-            {tokens.map((person) => (
+            {tokens.map((token) => (
               <ComboboxOption
-                key={person.id}
-                value={person}
+                key={token.id}
+                value={token}
                 className="group relative cursor-default select-none py-2 pl-3 pr-9 text-zinc-200 data-[focus]:bg-indigo-600 data-[focus]:text-white"
               >
-                {person.display}
+                {token.display}
               </ComboboxOption>
             ))}
             {tokens.length === 0 ? (
@@ -227,18 +228,18 @@ export default function SearchBar({
             <div className="bg-zinc-900 py-2 pl-3 text-xs font-medium">
               Transactions
             </div>
-            {transactions.map((person) => (
+            {transactions.map((tx) => (
               <ComboboxOption
-                key={person.id}
-                value={person}
+                key={tx.id}
+                value={tx}
                 className="group relative cursor-default select-none py-2 pl-3 pr-9 text-zinc-200 data-[focus]:bg-indigo-600 data-[focus]:text-white"
               >
-                {person.display}
+                {tx.display}
               </ComboboxOption>
             ))}
             {transactions.length === 0 ? (
               <div className="text-zinc-600 py-2 pl-3 text-xs font-medium">
-                {query.length > 5 ? "No results" : "Type more characters ..."}
+                {query.length >= 43 ? "No results" : "Type more characters ..."}
               </div>
             ) : (
               <></>
