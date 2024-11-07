@@ -18,8 +18,9 @@ export default function Receipt({ outcome, receipt }: {
         };
         receipt_id: string;
         receiver_id: string;
-    }
+    } | undefined
 }) {
+    if (receipt === undefined) return <div>Error fetching receipt {outcome.id}</div>;
     return <div>
         <div className="flex">Receipt: {outcome.id} <CopyButton text={outcome.id} /></div>
         <div className="flex">Predecessor: {receipt.predecessor_id}</div>
