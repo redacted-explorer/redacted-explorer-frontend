@@ -18,7 +18,7 @@ export default function TableElementTransactionHash({
       onMouseLeave={() => setHover(false)}
     >
       <div className="min-w-[9rem] relative flex">
-        <Link href={`https://nearvalidate.org/tx/${transactionHash}`}>
+        <Link href={`/tx/${transactionHash}`}>
           <span className="mr-1 ">{truncateString(transactionHash, 12)}</span>
         </Link>
         {hover && <CopyButton text={transactionHash} />}
