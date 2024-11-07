@@ -1,7 +1,7 @@
 "use client";
 import { ExecutionOutcomeWithId } from "near-api-js/lib/providers";
 import CopyButton from "./ui/CopyButton";
-import { displayAction, displayGas } from "@/app/tx/[hash]/page";
+import { utils } from "near-api-js";
 
 export default function Receipt({ outcome, receipt }: {
     outcome: ExecutionOutcomeWithId, receipt: {
@@ -42,4 +42,42 @@ export default function Receipt({ outcome, receipt }: {
             Gas burnt: {displayGas(outcome.outcome.gas_burnt)}
         </div>
     </div>;
+}
+
+export function displayAction(action: any): React.ReactNode {
+  if (action["Delegate"]) {
+    return <div>
+      <div>Delegate:</div>
+      <ol>
+        {action["Delegate"]["delegate_action"]["actions"].map((action: any) => <li>{displayAction(action)}</li>)}
+      </ol>
+    </div>;
+  } else if (action["FunctionCall"]) {
+    return <div className="flex">
+      Call {action["FunctionCall"]["method_name"]}
+      <CopyButton text={action["FunctionCall"]["method_name"]} />
+      {" "}
+      with args
+      {JSON.stringify(JSON.parse(atob(action["FunctionCall"]["args"])), null, 4)}
+      <CopyButton text={atob(action["FunctionCall"]["args"])} />
+    </div>;
+  } else if (action["Transfer"]) {
+    return <div className="flex">
+      Transfer {utils.format.formatNearAmount(action["Transfer"]["deposit"])} NEAR
+      <CopyButton text={action["Transfer"]["deposit"]} />
+    </div>;
+  } else {
+    return JSON.stringify(action);
+  }
+}
+
+export function displayGas(gas: number): React.ReactNode {
+  const formatter = Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 3,
+  });
+  if (gas < 1_000_000_000_000) {
+    return <div className="flex">{formatter.format(gas / 10 ** 9)} Ggas <CopyButton text={gas.toString()} /></div>;
+  } else {
+    return <div className="flex">{formatter.format(gas / 10 ** 12)} Tgas <CopyButton text={gas.toString()} /></div>;
+  }
 }
