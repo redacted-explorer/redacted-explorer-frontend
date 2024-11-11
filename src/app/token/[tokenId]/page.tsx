@@ -3,7 +3,7 @@
 import FtTransferTable from "@/components/tables/FtTransferTable";
 import TradeHistoryTable from "@/components/tables/TradeHistoryTable";
 import TokenOverview from "@/components/tokens/TokenOverview";
-import TokenTradeWidget from "@/components/TokenTradeWidget";
+// import TokenTradeWidget from "@/components/TokenTradeWidget";
 import Pill from "@/components/ui/Pill";
 import { TradingViewChart } from "@/components/ui/TradingViewChart";
 import { useState } from "react";
@@ -28,7 +28,7 @@ export default function Page({ params }: { params: { tokenId: string } }) {
             <TokenOverview tokenId={params.tokenId} />
           </div>
           <div className="flex justify-end items-end">
-            <TokenTradeWidget tokenId={params.tokenId} />
+            {/* <TokenTradeWidget tokenId={params.tokenId} /> */}
           </div>
         </div>
 

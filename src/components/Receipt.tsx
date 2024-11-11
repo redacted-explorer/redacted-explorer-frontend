@@ -1,83 +1,162 @@
 "use client";
 import { ExecutionOutcomeWithId } from "near-api-js/lib/providers";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import CopyButton from "./ui/CopyButton";
-import { utils } from "near-api-js";
+import { Action, JsonView } from "./Action";
+import { useState } from "react";
 
-export default function Receipt({ outcome, receipt }: {
-    outcome: ExecutionOutcomeWithId, receipt: {
-        predecessor_id: string;
-        receipt: {
-            Action: {
-                actions: any[];
-                gas_price: string;
-                input_data_ids: string[];
-                output_data_receivers: string[];
-                signer_id: string;
-                signer_public_key: string;
-            };
-        };
-        receipt_id: string;
-        receiver_id: string;
-    } | undefined
-}) {
-    if (receipt === undefined) return <div>Error fetching receipt {outcome.id}</div>;
-    return <div>
-        <div className="flex">Receipt: {outcome.id} <CopyButton text={outcome.id} /></div>
-        <div className="flex">Predecessor: {receipt.predecessor_id}</div>
-        <div className="flex">Receiver: {receipt.receiver_id}</div>
-        <div className="flex">Block Hash: {(outcome as any)["block_hash"]} <CopyButton text={(outcome as any)["block_hash"]} /></div>
-        <div className="flex">Actions:
-            <ol>
-                {receipt.receipt.Action.actions.map((action: any) => <li>{displayAction(action)}</li>)}
-                <hr />
-            </ol>
-        </div>
-        <div>
-            Logs
-            <pre>
-                {outcome.outcome.logs.map((log: any) => <div>{log}</div>)}
-            </pre>
-        </div>
-        <div className="flex">
-            Gas burnt: {displayGas(outcome.outcome.gas_burnt)}
-        </div>
-    </div>;
-}
+type LogData = {
+  standard: string;
+  version: string;
+  event: string;
+  data: any;
+};
 
-export function displayAction(action: any): React.ReactNode {
-  if (action["Delegate"]) {
-    return <div>
-      <div>Delegate:</div>
-      <ol>
-        {action["Delegate"]["delegate_action"]["actions"].map((action: any) => <li>{displayAction(action)}</li>)}
-      </ol>
-    </div>;
-  } else if (action["FunctionCall"]) {
-    return <div className="flex">
-      Call {action["FunctionCall"]["method_name"]}
-      <CopyButton text={action["FunctionCall"]["method_name"]} />
-      {" "}
-      with args
-      {JSON.stringify(JSON.parse(atob(action["FunctionCall"]["args"])), null, 4)}
-      <CopyButton text={atob(action["FunctionCall"]["args"])} />
-    </div>;
-  } else if (action["Transfer"]) {
-    return <div className="flex">
-      Transfer {utils.format.formatNearAmount(action["Transfer"]["deposit"])} NEAR
-      <CopyButton text={action["Transfer"]["deposit"]} />
-    </div>;
-  } else {
-    return JSON.stringify(action);
+const LogEntry = ({ log }: { log: string }) => {
+  if (!log.startsWith("EVENT_JSON:")) {
+    return <div className="text-sm text-gray-300 py-1">{log}</div>;
   }
-}
+
+  try {
+    const jsonStr = log.replace("EVENT_JSON:", "");
+    const parsed = JSON.parse(jsonStr) as LogData;
+    
+    if (!parsed.standard || !parsed.version || !parsed.event || !parsed.data) {
+      return <div className="text-sm text-gray-300 py-1">{log}</div>;
+    }
+
+    return (
+      <JsonView 
+        data={parsed} 
+        copy={`EVENT_JSON:${JSON.stringify(parsed)}`} 
+      />
+    );
+  } catch (e) {
+    return <div className="text-sm text-gray-300 py-1">{log}</div>;
+  }
+};
+
+const InfoRow = ({ label, value, copyable = false }: { 
+  label: string; 
+  value: string; 
+  copyable?: boolean;
+}) => (
+  <div className="flex items-center space-x-2 py-2 border-b border-gray-100">
+    <span className="text-gray-200 min-w-32">{label}:</span>
+    <span className="font-mono text-sm">{value}</span>
+    {copyable && <CopyButton text={value} />}
+  </div>
+);
+
+const Section = ({ 
+  title, 
+  children, 
+  defaultOpen = true 
+}: { 
+  title: string; 
+  children: React.ReactNode; 
+  defaultOpen?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  
+  return (
+    <div className="border rounded-lg shadow-sm mb-4">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-800"
+      >
+        <h3 className="font-medium text-gray-400">{title}</h3>
+        {isOpen ? (
+          <ChevronUp className="w-5 h-5 text-gray-100" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-gray-100" />
+        )}
+      </button>
+      {isOpen && <div className="px-4 pb-4">{children}</div>}
+    </div>
+  );
+};
 
 export function displayGas(gas: number): React.ReactNode {
   const formatter = Intl.NumberFormat("en-US", {
     maximumFractionDigits: 3,
   });
-  if (gas < 1_000_000_000_000) {
-    return <div className="flex">{formatter.format(gas / 10 ** 9)} Ggas <CopyButton text={gas.toString()} /></div>;
-  } else {
-    return <div className="flex">{formatter.format(gas / 10 ** 12)} Tgas <CopyButton text={gas.toString()} /></div>;
+  
+  const value = gas < 1_000_000_000_000
+    ? `${formatter.format(gas / 10 ** 9)} Ggas`
+    : `${formatter.format(gas / 10 ** 12)} Tgas`;
+
+  return (
+    <div className="flex items-center space-x-2">
+      <span>{value}</span>
+      <CopyButton text={gas.toString()} />
+    </div>
+  );
+}
+
+export default function Receipt({ 
+  outcome, 
+  receipt 
+}: {
+  outcome: ExecutionOutcomeWithId;
+  receipt: {
+    predecessor_id: string;
+    receipt: {
+      Action: {
+        actions: any[];
+        gas_price: string;
+        input_data_ids: string[];
+        output_data_receivers: string[];
+        signer_id: string;
+        signer_public_key: string;
+      };
+    };
+    receipt_id: string;
+    receiver_id: string;
+  } | undefined;
+}) {
+  if (receipt === undefined) {
+    return (
+      <div className="p-4 bg-red-700 text-red-200 rounded-lg">
+        Error fetching receipt {outcome.id}
+      </div>
+    );
   }
+
+  return (
+    <div className="space-y-4 max-w-3xl">
+      <Section title="Receipt Details">
+        <InfoRow label="Receipt ID" value={outcome.id} copyable />
+        <InfoRow label="Predecessor" value={receipt.predecessor_id} />
+        <InfoRow label="Receiver" value={receipt.receiver_id} />
+        <InfoRow 
+          label="Block Hash" 
+          value={(outcome as any)["block_hash"]} 
+          copyable 
+        />
+      </Section>
+
+      <Section title="Actions">
+        <div className="space-y-2">
+          {receipt.receipt.Action.actions.map((action: any, index: number) => (
+            <Action key={index} action={action} />
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Logs" defaultOpen={false}>
+        <div className="rounded-lg p-4 font-mono">
+          {outcome.outcome.logs.map((log: any, index: number) => (
+            <LogEntry key={index} log={log} />
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Gas Usage">
+        <div className="font-mono">
+          {displayGas(outcome.outcome.gas_burnt)}
+        </div>
+      </Section>
+    </div>
+  );
 }
