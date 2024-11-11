@@ -3,7 +3,7 @@
 import { MdContentCopy } from "react-icons/md";
 import { Tooltip } from "@nextui-org/react";
 import { useState } from "react";
-import AlertCard from "./Alert";
+import AlertCard from "./AlertCard";
 
 export default function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
